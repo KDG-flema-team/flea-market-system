@@ -1,6 +1,6 @@
 debug: true
 server:
-  port: 3010
+  port: 8080
 
 okta:
   oauth2:
