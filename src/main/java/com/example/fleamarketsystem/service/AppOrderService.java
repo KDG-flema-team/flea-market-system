@@ -1,15 +1,6 @@
 package com.example.fleamarketsystem.service;
 
-import com.example.fleamarketsystem.entity.AppOrder;
-import com.example.fleamarketsystem.entity.Item;
-import com.example.fleamarketsystem.entity.User;
-import com.example.fleamarketsystem.repository.ItemRepository;
-import com.example.fleamarketsystem.repository.AppOrderRepository;
-import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +8,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.fleamarketsystem.entity.AppOrder;
+import com.example.fleamarketsystem.entity.Item;
+import com.example.fleamarketsystem.entity.User;
+import com.example.fleamarketsystem.repository.AppOrderRepository;
+import com.example.fleamarketsystem.repository.ItemRepository;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
 
 @Service
 public class AppOrderService {
@@ -143,5 +145,33 @@ public class AppOrderService {
         return appOrderRepository.findAll().stream()
                 .filter(order -> order.getCreatedAt().toLocalDate().isAfter(startDate.minusDays(1)) && order.getCreatedAt().toLocalDate().isBefore(endDate.plusDays(1))) // Use order.getCreatedAt()
                 .collect(Collectors.groupingBy(AppOrder::getStatus, Collectors.counting()));
+    }
+    
+    /* API */
+    
+    public void writeStatisticsCsv(
+            LocalDate startDate,
+            LocalDate endDate,
+            PrintWriter writer
+    ) {
+        writer.append("統計期間,")
+              .append(startDate.toString())
+              .append(",")
+              .append(endDate.toString())
+              .append("\n");
+
+        writer.append("総売上,")
+              .append(getTotalSales(startDate, endDate).toString())
+              .append("\n\n");
+
+        writer.append("ステータス,件数\n");
+
+        getOrderCountByStatus(startDate, endDate)
+            .forEach((status, count) ->
+                writer.append(status)
+                      .append(",")
+                      .append(String.valueOf(count))
+                      .append("\n")
+            );
     }
 }
