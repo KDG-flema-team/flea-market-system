@@ -1,4 +1,6 @@
 -- ========== CLEAN DROP (依存順) ==========
+DROP TABLE IF EXISTS star CASCADE;
+DROP TABLE IF EXISTS report CASCADE;
 DROP TABLE IF EXISTS chat CASCADE;
 DROP TABLE IF EXISTS favorite_item CASCADE;
 DROP TABLE IF EXISTS review CASCADE;
@@ -101,6 +103,34 @@ CREATE TABLE user_complaint (
   FOREIGN KEY (reporter_user_id) REFERENCES users(id)
 );
 
+-- ========== STAR (評価) ==========
+CREATE TABLE star (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  target_user_id INT NOT NULL,
+  rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (target_user_id) REFERENCES users(id),
+  UNIQUE (user_id, target_user_id)
+);
+
+-- ========== REPORT (通報) ==========
+CREATE TABLE report (
+  id SERIAL PRIMARY KEY,
+  reporter_id INT NOT NULL,
+  reported_user_id INT NOT NULL,
+  reason TEXT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TIMESTAMP,
+  reviewed_by_admin_id INT,
+  FOREIGN KEY (reporter_id) REFERENCES users(id),
+  FOREIGN KEY (reported_user_id) REFERENCES users(id),
+  FOREIGN KEY (reviewed_by_admin_id) REFERENCES users(id)
+);
+
 -- ========== INDEX ==========
 CREATE INDEX IF NOT EXISTS idx_users_banned           ON users(banned);
 CREATE INDEX IF NOT EXISTS idx_users_banned_by        ON users(banned_by_admin_id);
@@ -122,3 +152,10 @@ CREATE INDEX IF NOT EXISTS idx_review_order_id        ON review(order_id);
 
 CREATE INDEX IF NOT EXISTS idx_uc_reported            ON user_complaint(reported_user_id);
 CREATE INDEX IF NOT EXISTS idx_uc_reporter            ON user_complaint(reporter_user_id);
+
+CREATE INDEX IF NOT EXISTS idx_star_user              ON star(user_id);
+CREATE INDEX IF NOT EXISTS idx_star_target            ON star(target_user_id);
+
+CREATE INDEX IF NOT EXISTS idx_report_reporter        ON report(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_report_reported        ON report(reported_user_id);
+CREATE INDEX IF NOT EXISTS idx_report_status          ON report(status);

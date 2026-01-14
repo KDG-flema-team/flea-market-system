@@ -36,6 +36,9 @@ public class User {
 	@Column(nullable = false)
 	private String role; // "USER" or "ADMIN"
 
+	@Column(nullable = false)
+	private String rank = "bronze"; // "bronze", "silver", "gold", "platinum"
+
 	@Column(name = "line_notify_token")
 	private String lineNotifyToken;
 
