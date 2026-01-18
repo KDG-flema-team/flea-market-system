@@ -1,7 +1,9 @@
 package com.example.fleamarketsystem.security;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import com.example.fleamarketsystem.entity.User;
@@ -22,18 +24,20 @@ public class AuthUserResolver {
 		
 		if (authentication == null || !authentication.isAuthenticated()) {
 			
-			throw new RuntimeException("認証されていません。");
+			throw new AuthenticationCredentialsNotFoundException("認証が必要です");
 			
 		}
 		
 		Object principal = authentication.getPrincipal();
+		
+		/* フォームログイン */
 		
 		if (principal instanceof UserDetails userDetails) {
 			
 			String email = userDetails.getUsername();
 			
 			User user = userRepository.findByEmailIgnoreCase(email)
-					.orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
+					.orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません"));
 			
 			return new AuthUser(
 					user.getId(),
@@ -61,7 +65,7 @@ public class AuthUserResolver {
 		 }
 		 */
 		 
-		 throw new RuntimeException("Unsupported Principal");
+		 throw new AuthenticationCredentialsNotFoundException("未対応の認証方式です");
 		
 	}
 

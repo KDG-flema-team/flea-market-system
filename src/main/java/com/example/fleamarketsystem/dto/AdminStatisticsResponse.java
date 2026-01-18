@@ -8,7 +8,7 @@ public record AdminStatisticsResponse(
 	
 	LocalDate startDate,
 	LocalDate endDate,
-	BigDecimal totalSajes,
+	BigDecimal totalSales,
 	Map<String, Long> orderCountByStatus
 	
 ) {}
