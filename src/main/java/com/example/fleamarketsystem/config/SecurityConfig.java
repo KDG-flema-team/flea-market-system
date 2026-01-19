@@ -5,6 +5,7 @@ import com.example.fleamarketsystem.security.OAuth2LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -24,6 +25,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
 	@Autowired
+	@Lazy
 	private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
 	@Bean
@@ -48,15 +50,16 @@ public class SecurityConfig {
 	public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
 		http
 				.securityMatcher("/api/**")
-				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/auth/**").permitAll()
-						.requestMatchers("/api/admin/**").hasRole("ADMIN")
-						.anyRequest().authenticated())
-				.sessionManagement(session -> session
-						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.csrf(AbstractHttpConfigurer::disable)
-				.cors(withDefaults())
-				.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+				// .authorizeHttpRequests(auth -> auth
+				// 		.requestMatchers("/api/auth/**").permitAll()
+				// 		.requestMatchers("/api/admin/**").hasRole("ADMIN")
+				// 		.anyRequest().authenticated())
+				// .sessionManagement(session -> session
+				// 		.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				// .csrf(AbstractHttpConfigurer::disable)
+				// .cors(withDefaults())
+				// .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+				;
 
 		return http.build();
 	}
@@ -66,10 +69,11 @@ public class SecurityConfig {
 	@Order(2)
 	public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 		http
-				.securityMatcher("/**")
+				.securityMatcher("/**", "!/api/**")
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(
 								"/login",
+								"/login/oauth2/code/**",
 								"/oauth2/**",
 								"/css/**", "/js/**", "/images/**", "/webjars/**")
 						.permitAll()
@@ -86,7 +90,8 @@ public class SecurityConfig {
 						.logoutUrl("/logout")
 						.logoutSuccessUrl("/login?logout")
 						.permitAll())
-				.csrf(Customizer.withDefaults());
+				.csrf(Customizer.withDefaults())
+				;
 
 		return http.build();
 	}

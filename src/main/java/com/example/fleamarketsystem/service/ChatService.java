@@ -15,12 +15,14 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final ItemRepository itemRepository;
-    private final LineNotifyService lineNotifyService;
+    // private final LineNotifyService lineNotifyService;
 
-    public ChatService(ChatRepository chatRepository, ItemRepository itemRepository, LineNotifyService lineNotifyService) {
+    public ChatService(ChatRepository chatRepository, ItemRepository itemRepository
+        // , LineNotifyService lineNotifyService
+    ) {
         this.chatRepository = chatRepository;
         this.itemRepository = itemRepository;
-        this.lineNotifyService = lineNotifyService;
+        // this.lineNotifyService = lineNotifyService;
     }
 
     public List<Chat> getChatMessagesByItem(Long itemId) {
@@ -58,13 +60,13 @@ public class ChatService {
             receiver = item.getSeller();
         }
 
-        if (receiver != null && receiver.getLineNotifyToken() != null) {
-            String notificationMessage = String.format("\n商品「%s」に関する新しいメッセージが届きました！\n送信者: %s\nメッセージ: %s",
-                    item.getName(),
-                    sender.getName(),
-                    message);
-            lineNotifyService.sendMessage(receiver.getLineNotifyToken(), notificationMessage);
-        }
+        // if (receiver != null && receiver.getLineNotifyToken() != null) {
+        //     String notificationMessage = String.format("\n商品「%s」に関する新しいメッセージが届きました！\n送信者: %s\nメッセージ: %s",
+        //             item.getName(),
+        //             sender.getName(),
+        //             message);
+        //     lineNotifyService.sendMessage(receiver.getLineNotifyToken(), notificationMessage);
+        // }
 
         return savedChat;
     }

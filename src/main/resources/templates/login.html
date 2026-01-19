@@ -20,6 +20,20 @@
     </div>
     <button type="submit">ログイン</button>
   </form>
+  
+  <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ccc;">
+    <p>または、SNSアカウントでログイン：</p>
+    <a th:href="@{/oauth2/authorization/okta}" style="display: inline-block; padding: 10px 20px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">
+      Auth0でログイン
+    </a>
+    <a th:href="@{/oauth2/authorization/google}" style="display: inline-block; padding: 10px 20px; background-color: #db4437; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">
+      Googleでログイン
+    </a>
+    <a th:href="@{/oauth2/authorization/github}" style="display: inline-block; padding: 10px 20px; background-color: #333; color: white; text-decoration: none; border-radius: 4px;">
+      GitHubでログイン
+    </a>
+  </div>
+  
   <p th:if="${param.error}">ログインに失敗しました。</p>
   <p th:if="${param.logout}">ログアウトしました。</p>
 </main>

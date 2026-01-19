@@ -21,7 +21,6 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider tokenProvider;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -38,12 +37,15 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             name = oAuth2User.getAttribute("login"); // GitHub fallback
         }
 
+        final String finalEmail = email;
+        final String finalName = name;
+
         // ユーザーが存在しない場合は作成
         User user = userRepository.findByEmail(email)
             .orElseGet(() -> {
                 User newUser = new User();
-                newUser.setEmail(email);
-                newUser.setName(name);
+                newUser.setEmail(finalEmail);
+                newUser.setName(finalName);
                 newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // ランダムパスワード
                 newUser.setRole("USER");
                 newUser.setRank("bronze");
@@ -52,17 +54,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 return userRepository.save(newUser);
             });
 
-        // JWT生成（UserPrincipalを使用）
-        UserPrincipal userPrincipal = UserPrincipal.create(user);
-        org.springframework.security.authentication.UsernamePasswordAuthenticationToken authToken = 
-            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                userPrincipal, null, userPrincipal.getAuthorities());
-        
-        String jwt = tokenProvider.generateToken(authToken);
-
-        // JWTをクエリパラメータとしてフロントエンドにリダイレクト
-        // 本番環境では、より安全な方法（例：HttpOnlyクッキー）を使用することを推奨
-        getRedirectStrategy().sendRedirect(request, response, 
-            "http://localhost:3000/oauth2/redirect?token=" + jwt);
+        // OAuth2認証成功後は、商品一覧ページにリダイレクト
+        // Spring Securityのセッション管理により、認証情報は自動的に管理される
+        getRedirectStrategy().sendRedirect(request, response, "/items");
     }
 }
