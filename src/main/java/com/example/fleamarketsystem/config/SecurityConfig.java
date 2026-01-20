@@ -1,9 +1,11 @@
 package com.example.fleamarketsystem.config;
 
+import com.example.fleamarketsystem.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -23,6 +25,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -71,50 +74,53 @@ public class SecurityConfig {
 		return jwtAuthenticationConverter;
 	}
 
+	@Bean
+	public JwtAuthenticationFilter jwtAuthenticationFilter() {
+		return new JwtAuthenticationFilter();
+	}
+
 	// REST APIのセキュリティフィルタチェーン
 	@Bean
 	@Order(1)
 	public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
 		http
 				.securityMatcher("/api/**")
+				.csrf(csrf -> csrf.disable())
+				.sessionManagement(session -> session
+						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						/*
-						 * .requestMatchers(
-						 * "/login",
-						 * "/css/**", "/js/**", "/images/**", "/webjars/**")
-						 * .permitAll()
-						 */
-
-						/* API v1 テスト用JWT無視 */
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/api/v1/items/**").permitAll()
 						.requestMatchers("/api/v1/auth/**").permitAll()
-
 						.requestMatchers("/api/v1/orders/**").authenticated()
-
-						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+						.requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
 						.requestMatchers("/api/v1/**").authenticated())
-				// Basic 認証を Lambda で全体に適用
-				.httpBasic(httpBasic -> httpBasic
-						.authenticationEntryPoint((request, response, authException) -> {
-							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-							response.setContentType("application/json");
-							response.getWriter().write("{\"error\":\"unauthorized\"}");
-						}))
-
-				/* Thymeleaf */
-				/*
-				 * .requestMatchers("/admin/**").hasRole("ADMIN")
-				 * .anyRequest().authenticated())
-				 */
-				.formLogin(form -> form.disable())
-				.logout(logout -> logout.disable())
+				.oauth2ResourceServer(oauth2 -> oauth2
+						.jwt(jwt -> jwt
+								.jwtAuthenticationConverter(jwtAuthenticationConverter())))
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint((req, res, e) -> {
 							res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 							res.setContentType("application/json");
 							res.getWriter().write("{\"error\":\"unauthorized\"}");
 						}));
+
+		return http.build();
+	}
+
+	// Web (Thymeleaf) 用のセキュリティフィルタチェーン
+	@Bean
+	@Order(2)
+	public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+		http
+			.authorizeHttpRequests(auth -> auth
+					.requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
+					.requestMatchers(HttpMethod.GET, "/items/**").permitAll()
+					.anyRequest().authenticated())
+			.formLogin(form -> form
+					.loginPage("/login")
+					.permitAll())
+			.logout(logout -> logout.permitAll());
 
 		return http.build();
 	}

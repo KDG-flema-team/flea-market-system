@@ -4,6 +4,7 @@ import com.example.fleamarketsystem.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -16,12 +17,19 @@ import java.util.Map;
 public class UserApiController {
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserPrincipal currentUser) {
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
         try {
+            if (jwt == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "User not authenticated");
+                return ResponseEntity.status(401).body(error);
+            }
+            
             Map<String, Object> response = new HashMap<>();
-            response.put("id", currentUser.getId());
-            response.put("name", currentUser.getName());
-            response.put("email", currentUser.getEmail());
+            response.put("sub", jwt.getSubject());
+            response.put("email", jwt.getClaimAsString("email"));
+            response.put("name", jwt.getClaimAsString("name"));
+            response.put("claims", jwt.getClaims());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -32,18 +40,20 @@ public class UserApiController {
     }
 
     @GetMapping("/my-page")
-    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal UserPrincipal currentUser) {
+    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
         try {
-            if (currentUser == null) {
+            if (jwt == null) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "User not authenticated");
                 return ResponseEntity.status(401).body(error);
             }
             
             Map<String, Object> response = new HashMap<>();
-            response.put("id", currentUser.getId());
-            response.put("name", currentUser.getName());
-            response.put("email", currentUser.getEmail());
+            response.put("sub", jwt.getSubject());
+            response.put("email", jwt.getClaimAsString("email"));
+            response.put("name", jwt.getClaimAsString("name"));
+            response.put("aud", jwt.getAudience());
+            response.put("iss", jwt.getIssuer());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
