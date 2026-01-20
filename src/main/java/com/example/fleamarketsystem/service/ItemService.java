@@ -1,18 +1,18 @@
 package com.example.fleamarketsystem.service;
 
-import com.example.fleamarketsystem.entity.Item;
-import com.example.fleamarketsystem.entity.User;
-import com.example.fleamarketsystem.repository.ItemRepository;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
+import com.example.fleamarketsystem.entity.Item;
+import com.example.fleamarketsystem.entity.User;
+import com.example.fleamarketsystem.repository.ItemRepository;
 
 @Service
 public class ItemService {
@@ -79,4 +79,11 @@ public class ItemService {
             itemRepository.save(item);
         });
     }
+    
+    /* API */
+    
+    public Item save(Item item) {
+        return itemRepository.save(item);
+    }
+    
 }
