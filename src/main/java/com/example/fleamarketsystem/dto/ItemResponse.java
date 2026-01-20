@@ -3,6 +3,8 @@ package com.example.fleamarketsystem.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.example.fleamarketsystem.entity.Item;
+
 public record ItemResponse(
 	
 	Long id,
@@ -25,4 +27,29 @@ public record ItemResponse(
 	
 	LocalDateTime createdAt
 	
-) {}
+) {
+	
+	public static ItemResponse from(Item item) {
+		
+        return new ItemResponse(
+        		
+            item.getId(),
+            item.getName(),
+            item.getDescription(),
+            item.getPrice(),
+            item.getStatus(),
+            item.getImageUrl(),
+            
+            item.getCategory().getId(),
+            item.getCategory().getName(),
+            
+            item.getSeller().getId(),
+            item.getSeller().getName(),
+            
+            item.getCreatedAt()
+            
+        );
+        
+    }
+	
+}
