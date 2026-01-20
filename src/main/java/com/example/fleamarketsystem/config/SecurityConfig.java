@@ -1,11 +1,11 @@
 package com.example.fleamarketsystem.config;
 
-import com.example.fleamarketsystem.security.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,19 +13,28 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static org.springframework.security.config.Customizer.withDefaults;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-	@Bean
-	public JwtAuthenticationFilter jwtAuthenticationFilter() {
-		return new JwtAuthenticationFilter();
-	}
+	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+	private String issuerUri;
+
+	@Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
+	private String audience;
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -35,6 +44,31 @@ public class SecurityConfig {
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
 		return authConfig.getAuthenticationManager();
+	}
+
+	@Bean
+	public JwtDecoder jwtDecoder() {
+		NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
+		
+		OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
+		OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+		OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
+		
+		jwtDecoder.setJwtValidator(withAudience);
+		
+		return jwtDecoder;
+	}
+
+	@Bean
+	public JwtAuthenticationConverter jwtAuthenticationConverter() {
+		JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+		grantedAuthoritiesConverter.setAuthoritiesClaimName("permissions");
+		grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+		
+		return jwtAuthenticationConverter;
 	}
 
 	// REST APIのセキュリティフィルタチェーン
@@ -51,13 +85,16 @@ public class SecurityConfig {
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.csrf(AbstractHttpConfigurer::disable)
 				.cors(withDefaults())
-				.addFilterBefore(jwtAuthenticationFilter(),
-						UsernamePasswordAuthenticationFilter.class)
+				.oauth2ResourceServer(oauth2 -> oauth2
+						.jwt(jwt -> jwt
+								.decoder(jwtDecoder())
+								.jwtAuthenticationConverter(jwtAuthenticationConverter())))
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint((req, res, e) -> {
 							res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 							res.setContentType("application/json");
-							res.getWriter().write("{\"error\":\"unauthorized\"}");
+							String message = e.getMessage() != null ? e.getMessage() : "Unauthorized";
+							res.getWriter().write(String.format("{\"error\":\"unauthorized\",\"message\":\"%s\"}", message));
 						}));
 
 		return http.build();

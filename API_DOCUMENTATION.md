@@ -2,6 +2,43 @@
 
 このドキュメントでは、新しく実装されたREST API機能について説明します。
 
+## 認証について
+
+このAPIは、Auth0を使用したJWT (JSON Web Token) 認証を実装しています。
+
+### JWT認証の設定
+
+- **JWKS URI**: `https://dev-3hpu1z5igskz6tna.us.auth0.com/.well-known/jwks.json`
+- **Issuer**: `https://dev-3hpu1z5igskz6tna.us.auth0.com/`
+- **Audience**: `flea-market-system`
+
+### APIリクエストの認証
+
+保護されたAPIエンドポイントにアクセスするには、HTTPリクエストのAuthorizationヘッダーにBearerトークンを含める必要があります:
+
+```
+GET /api/items
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEyMyJ9...
+```
+
+### JWT検証
+
+バックエンドは以下の項目を検証します:
+- トークンの署名 (JWKSを使用)
+- Issuer (発行者)
+- Audience (対象者)
+- 有効期限
+
+### 公開エンドポイント
+
+以下のエンドポイントは認証なしでアクセス可能です:
+- `/api/auth/**` - 認証関連のエンドポイント
+
+### 保護されたエンドポイント
+
+- `/api/admin/**` - ADMIN ロールが必要
+- その他の `/api/**` - 有効なJWTトークンが必要
+
 ## 実装された機能
 
 ### 1. ユーザー管理
