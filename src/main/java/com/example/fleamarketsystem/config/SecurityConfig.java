@@ -49,13 +49,13 @@ public class SecurityConfig {
 	@Bean
 	public JwtDecoder jwtDecoder() {
 		NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
-		
+
 		OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
 		OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
 		OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
-		
+
 		jwtDecoder.setJwtValidator(withAudience);
-		
+
 		return jwtDecoder;
 	}
 
@@ -67,7 +67,7 @@ public class SecurityConfig {
 
 		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
 		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-		
+
 		return jwtAuthenticationConverter;
 	}
 
@@ -78,48 +78,35 @@ public class SecurityConfig {
 		http
 				.securityMatcher("/api/**")
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/auth/**").permitAll()
-						.requestMatchers("/api/admin/**").hasRole("ADMIN")
-						.anyRequest().authenticated())
-				.sessionManagement(session -> session
-						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.csrf(AbstractHttpConfigurer::disable)
-				.cors(withDefaults())
-				.oauth2ResourceServer(oauth2 -> oauth2
-						.jwt(jwt -> jwt
-								.decoder(jwtDecoder())
-								.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-				.exceptionHandling(ex -> ex
-						.authenticationEntryPoint((req, res, e) -> {
-							res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-							res.setContentType("application/json");
-							String message = e.getMessage() != null ? e.getMessage() : "Unauthorized";
-							res.getWriter().write(String.format("{\"error\":\"unauthorized\",\"message\":\"%s\"}", message));
-						}));
+						/*
+						 * .requestMatchers(
+						 * "/login",
+						 * "/css/**", "/js/**", "/images/**", "/webjars/**")
+						 * .permitAll()
+						 */
 
-		return http.build();
-	}
-
-	// 従来のウェブUIのセキュリティフィルタチェーン（OAuth2対応）
-	@Bean
-	@Order(2)
-	public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
-		http
-				.securityMatcher("/**", "!/api/**")
-				.csrf(csrf -> csrf.disable())
-				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
+						/* API v1 テスト用JWT無視 */
+						.requestMatchers("/error").permitAll()
 						.requestMatchers("/api/v1/items/**").permitAll()
 						.requestMatchers("/api/v1/auth/**").permitAll()
+
+						.requestMatchers("/api/v1/orders/**").authenticated()
+
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-						.requestMatchers("/api/v1/**").authenticated()
-						.anyRequest().permitAll())
+						.requestMatchers("/api/v1/**").authenticated())
+				// Basic 認証を Lambda で全体に適用
 				.httpBasic(httpBasic -> httpBasic
 						.authenticationEntryPoint((request, response, authException) -> {
 							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 							response.setContentType("application/json");
 							response.getWriter().write("{\"error\":\"unauthorized\"}");
 						}))
+
+				/* Thymeleaf */
+				/*
+				 * .requestMatchers("/admin/**").hasRole("ADMIN")
+				 * .anyRequest().authenticated())
+				 */
 				.formLogin(form -> form.disable())
 				.logout(logout -> logout.disable())
 				.exceptionHandling(ex -> ex
