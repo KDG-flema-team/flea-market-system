@@ -83,9 +83,9 @@ public class AdminRestController {
                 "attachment; filename=\"flea_market_statistics.csv\""
         );
 
-        try (PrintWriter writer = response.getWriter()) {
-            appOrderService.writeStatisticsCsv(startDate, endDate, writer);
-        }
+        PrintWriter writer = response.getWriter();
+        appOrderService.writeStatisticsCsv(startDate, endDate, writer);
+        writer.flush();
     }
 }
 

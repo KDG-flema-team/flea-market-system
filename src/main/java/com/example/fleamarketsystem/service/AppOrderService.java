@@ -137,7 +137,12 @@ public class AppOrderService {
 
     public BigDecimal getTotalSales(LocalDate startDate, LocalDate endDate) {
         return appOrderRepository.findAll().stream()
-                .filter(order -> order.getStatus().equals("購入済") || order.getStatus().equals("発送済"))
+        		.filter(order -> order.getCreatedAt() != null)
+                .filter(order -> order.getPrice() != null)
+                .filter(order ->
+                	"購入済".equals(order.getStatus()) ||
+                	"発送済".equals(order.getStatus())
+                )
                 .filter(order -> order.getCreatedAt().toLocalDate().isAfter(startDate.minusDays(1)) && order.getCreatedAt().toLocalDate().isBefore(endDate.plusDays(1))) // Use order.getCreatedAt()
                 .map(AppOrder::getPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -145,6 +150,8 @@ public class AppOrderService {
 
     public Map<String, Long> getOrderCountByStatus(LocalDate startDate, LocalDate endDate) {
         return appOrderRepository.findAll().stream()
+        		.filter(o -> o.getCreatedAt() != null)
+                .filter(o -> o.getStatus() != null)
                 .filter(order -> order.getCreatedAt().toLocalDate().isAfter(startDate.minusDays(1)) && order.getCreatedAt().toLocalDate().isBefore(endDate.plusDays(1))) // Use order.getCreatedAt()
                 .collect(Collectors.groupingBy(AppOrder::getStatus, Collectors.counting()));
     }
