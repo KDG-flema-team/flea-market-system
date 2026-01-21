@@ -17,6 +17,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	Optional<User> findByName(String name);
 
+	@Query("SELECT u FROM User u WHERE u.auth0Id = :auth0Id")
+	Optional<User> findByAuth0Id(@Param("auth0Id") String auth0Id);
+
 	boolean existsByEmail(String email);
 
 	// キャストは CAST(... AS double precision) にして、:userId との衝突を回避

@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS users CASCADE;
 -- ========== CREATE ==========
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
+  auth0_id VARCHAR(255) UNIQUE,             -- ★ Auth0のユーザーID（ローカルではNULL許容）
   name VARCHAR(50) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,

@@ -44,6 +44,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         User user = userRepository.findByEmail(email)
             .orElseGet(() -> {
                 User newUser = new User();
+                newUser.setAuth0Id(oAuth2User.getName()); // Auth0 ID (sub claim) を設定
                 newUser.setEmail(finalEmail);
                 newUser.setName(finalName);
                 newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // ランダムパスワード
