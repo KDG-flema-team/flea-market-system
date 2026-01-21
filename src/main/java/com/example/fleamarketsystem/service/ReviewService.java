@@ -1,15 +1,17 @@
 package com.example.fleamarketsystem.service;
 
+import java.util.List;
+import java.util.OptionalDouble;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.fleamarketsystem.entity.AppOrder;
 import com.example.fleamarketsystem.entity.Review;
 import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.repository.AppOrderRepository;
 import com.example.fleamarketsystem.repository.ReviewRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.OptionalDouble;
+import com.example.fleamarketsystem.security.AuthUser;
 
 @Service
 public class ReviewService {
@@ -23,9 +25,14 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review submitReview(Long orderId, User reviewer, int rating, String comment) {
+    public Review submitReview(Long orderId, AuthUser authUser, int rating, String comment) {
         AppOrder order = appOrderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found."));
+                .orElseThrow(() -> new IllegalArgumentException("注文が見つかりません"));
+        
+        User reviewer = order.getBuyer();
+        if (!reviewer.getId().equals(authUser.userId())) {
+            throw new IllegalStateException("Only the buyer can review this order.");
+        }
 
         if (!order.getBuyer().getId().equals(reviewer.getId())) {
             throw new IllegalStateException("Only the buyer can review this order.");
