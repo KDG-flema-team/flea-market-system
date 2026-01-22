@@ -22,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	boolean existsByEmail(String email);
 
+	
+
 	// キャストは CAST(... AS double precision) にして、:userId との衝突を回避
 	@Query(value = """
 			SELECT CAST(COALESCE(AVG(r.rating), 0) AS double precision)
