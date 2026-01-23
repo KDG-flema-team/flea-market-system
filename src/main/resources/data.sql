@@ -18,4 +18,19 @@ VALUES
 
   ((SELECT id FROM users WHERE email='sellerA@example.com'),
    'ワイヤレスイヤホン','ノイズキャンセリング機能付き。',8000.00,
-   (SELECT id FROM category WHERE name='家電'),'出品中');
+   (SELECT id FROM category WHERE name='家電'),'出品中'),
+   
+  ((SELECT id FROM users WHERE email='sellerA@example.com'),
+   '超面白い本','とても面白く大きい本',2000.00,
+   (SELECT id FROM category WHERE name='本'),'出品中');
+
+   
+INSERT INTO app_order (item_id, buyer_id, price, status, created_at)
+VALUES
+(
+    (SELECT id FROM item WHERE name='超面白い本'),
+    (SELECT id FROM users WHERE email='xyz@example.com'),
+    (SELECT price FROM item WHERE name='超面白い本'),
+    '購入済',
+    NOW()
+);

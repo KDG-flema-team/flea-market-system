@@ -49,7 +49,7 @@ public class ReviewController {
 		User reviewer = userService.getUserByEmail(userDetails.getUsername())
 				.orElseThrow(() -> new RuntimeException("User not found"));
 		try {
-			reviewService.submitReview(orderId, reviewer, rating, comment);
+			// reviewService.submitReview(orderId, reviewer, rating, comment);
 			redirectAttributes.addFlashAttribute("successMessage", "評価を送信しました！");
 		} catch (IllegalStateException | IllegalArgumentException e) {
 			redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
