@@ -1,20 +1,15 @@
 package com.example.fleamarketsystem.config;
 
-import com.example.fleamarketsystem.security.JwtAuthenticationFilter;
+import com.example.fleamarketsystem.security.OAuth2LoginSuccessHandler;
+import com.example.fleamarketsystem.config.AudienceValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import static org.springframework.security.config.Customizer.withDefaults;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -25,7 +20,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -33,97 +27,82 @@ import jakarta.servlet.http.HttpServletResponse;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-	private String issuerUri;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
-	@Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
-	private String audience;
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
+    private String audience;
 
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-		return authConfig.getAuthenticationManager();
-	}
+    public SecurityConfig(OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+    }
 
-	@Bean
-	public JwtDecoder jwtDecoder() {
-		NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
 
-		OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
-		OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
-		OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
+        OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+        OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
 
-		jwtDecoder.setJwtValidator(withAudience);
+        jwtDecoder.setJwtValidator(withAudience);
 
-		return jwtDecoder;
-	}
+        return jwtDecoder;
+    }
 
-	@Bean
-	public JwtAuthenticationConverter jwtAuthenticationConverter() {
-		JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-		grantedAuthoritiesConverter.setAuthoritiesClaimName("permissions");
-		grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("permissions");
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
 
-		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
 
-		return jwtAuthenticationConverter;
-	}
+        return jwtAuthenticationConverter;
+    }
 
-	@Bean
-	public JwtAuthenticationFilter jwtAuthenticationFilter() {
-		return new JwtAuthenticationFilter();
-	}
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/v1/items/**").permitAll()
+                        .requestMatchers("/api/v1/admin/users/**").permitAll()
+                        .requestMatchers("/api/v1/orders/**").authenticated()
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/**").authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"error\":\"unauthorized\"}");
+                        }));
 
-	// REST APIのセキュリティフィルタチェーン
-	@Bean
-	@Order(1)
-	public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
-		http
-				.securityMatcher("/api/**")
-				.csrf(csrf -> csrf.disable())
-				.sessionManagement(session -> session
-						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/error").permitAll()
-						.requestMatchers("/api/v1/items/**").permitAll()
-						.requestMatchers("/api/v1/auth/**").permitAll()
-						.requestMatchers("/api/v1/admin/users/**").permitAll()
-						
-						.requestMatchers("/api/v1/orders/**").authenticated()
-						.requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
-						.requestMatchers("/api/v1/**").authenticated())
-				.oauth2ResourceServer(oauth2 -> oauth2
-						.jwt(jwt -> jwt
-								.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-				.exceptionHandling(ex -> ex
-						.authenticationEntryPoint((req, res, e) -> {
-							res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-							res.setContentType("application/json");
-							res.getWriter().write("{\"error\":\"unauthorized\"}");
-						}));
+        return http.build();
+    }
 
-		return http.build();
-	}
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/webjars/**", "/error", "/oauth2/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/items/**").permitAll()
+                        .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .successHandler(oAuth2LoginSuccessHandler))
+                .logout(logout -> logout.permitAll());
 
-	// Web (Thymeleaf) 用のセキュリティフィルタチェーン
-	@Bean
-	@Order(2)
-	public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
-		http
-			.authorizeHttpRequests(auth -> auth
-					.requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/webjars/**", "/error").permitAll()
-					.requestMatchers(HttpMethod.GET, "/items/**").permitAll()
-					.anyRequest().authenticated())
-			.formLogin(form -> form
-					.loginPage("/login")
-					.permitAll())
-			.logout(logout -> logout.permitAll());
-
-		return http.build();
-	}
+        return http.build();
+    }
 }

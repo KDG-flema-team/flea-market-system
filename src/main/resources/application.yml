@@ -2,11 +2,6 @@ debug: true
 server:
   port: 8080
 
-# JWT設定
-jwt:
-  secret: mySecretKeyForJwtTokenGenerationAndValidation12345678901234567890
-  expiration: 86400000 # 24 hours in milliseconds
-
 # OAuth2設定（SNS認証用）
 spring:
   security:

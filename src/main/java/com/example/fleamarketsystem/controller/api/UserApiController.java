@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.entity.User;
 
 
@@ -34,12 +35,7 @@ public class UserApiController {
             if (jwt == null) {
                 return createErrorResponse("User not authenticated", 401);
             }
-            String tokenValue = jwt.getTokenValue();
-            User user = userService.getOrCreateUserFromAuth0(
-                jwt.getSubject(),
-                jwt.getClaimAsString("email"),
-                jwt.getClaimAsString("name")
-            );
+            User user = userService.getOrCreateUserFromAuth0(jwt);
             
             return ResponseEntity.ok(createUserResponse(jwt, user));
         } catch (Exception e) {
@@ -51,27 +47,50 @@ public class UserApiController {
      * ユーザープロフィールを取得します
      */
     @GetMapping("/my-page")
-    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal Jwt jwt, @LoginUser User loginUser) {
         try {
             if (jwt == null) {
                 return createErrorResponse("User not authenticated", 401);
             }
+            if (loginUser == null) {
+                return createErrorResponse("User not found", 404);
+            }
             
-            User user = userService.getOrCreateUserFromAuth0(
-                jwt.getSubject(),
-                jwt.getClaimAsString("email"),
-                jwt.getClaimAsString("name")
-            );
-            
-            return ResponseEntity.ok(createProfileResponse(jwt, user));
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", loginUser.getId());
+            response.put("email", loginUser.getEmail());
+            response.put("name", loginUser.getName());
+            response.put("role", loginUser.getRole());
+            response.put("rank", loginUser.getRank());
+            response.put("enabled", loginUser.isEnabled());
+            response.put("banned", loginUser.isBanned());
+            // JWT情報も含める場合
+            response.put("auth0Id", jwt.getSubject());
+            response.put("issuer", jwt.getIssuer());
+            return ResponseEntity.ok(response);
+            // return ResponseEntity.ok(createProfileResponse(jwt, user));
         } catch (Exception e) {
             return createErrorResponse("Failed to get user profile", e.getMessage());
         }
+
     }
 
     /**
      * ユーザー情報のレスポンスマップを作成します
      */
+    private ResponseEntity<Map<String, Object>> createErrorResponse(String message, int status) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", message);
+        body.put("status", status);
+        return ResponseEntity.status(status).body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> createErrorResponse(String message, String detail) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", message);
+        body.put("detail", detail);
+        return ResponseEntity.status(500).body(body);
+    }
     private Map<String, Object> createUserResponse(Jwt jwt, User user) {
         Map<String, Object> response = new HashMap<>();
         response.put("sub", jwt.getSubject());
@@ -100,22 +119,4 @@ public class UserApiController {
         return response;
     }
 
-    /**
-     * エラーレスポンスを作成します
-     */
-    private ResponseEntity<?> createErrorResponse(String error, int status) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", error);
-        return ResponseEntity.status(status).body(errorResponse);
-    }
-
-    /**
-     * エラーレスポンスを作成します
-     */
-    private ResponseEntity<?> createErrorResponse(String error, String message) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", error);
-        errorResponse.put("message", message);
-        return ResponseEntity.badRequest().body(errorResponse);
-    }
 }
