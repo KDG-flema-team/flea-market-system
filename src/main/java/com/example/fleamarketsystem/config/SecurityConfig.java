@@ -2,6 +2,7 @@ package com.example.fleamarketsystem.config;
 
 import com.example.fleamarketsystem.security.OAuth2LoginSuccessHandler;
 import com.example.fleamarketsystem.config.AudienceValidator;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

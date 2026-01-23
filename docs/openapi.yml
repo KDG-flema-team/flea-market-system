@@ -536,6 +536,72 @@ paths:
         "200":
           description: Review submitted
 
+  # ============================
+  # Star (Rating) Endpoints
+  # ============================
+  /stars:
+    post:
+      tags: [Stars]
+      summary: Create a star (rating) for a user
+      description: Create a rating and optional comment about a target user.
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StarRequest"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StarResponse"
+
+  /stars/{targetUserId}:
+    get:
+      tags: [Stars]
+      summary: Get stars for a user
+      description: Returns a list of ratings given to the target user.
+      parameters:
+        - name: targetUserId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StarResponse"
+
+  /stars/{targetUserId}/stats:
+    get:
+      tags: [Stars]
+      summary: Get rating statistics for a user
+      description: Returns average rating and total number of ratings for the target user.
+      parameters:
+        - name: targetUserId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StarStatsResponse"
+
   /chat/{itemId}:
     get:
       tags: [Chat]
@@ -992,6 +1058,70 @@ components:
         - reportedUser
         - reporterUser
         - reason
+
+    StarRequest:
+      type: object
+      properties:
+        targetUserId:
+          type: integer
+          format: int64
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 1000
+      required:
+        - targetUserId
+        - rating
+
+    StarResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        targetUserId:
+          type: integer
+          format: int64
+        targetUserName:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - userName
+        - targetUserId
+        - targetUserName
+        - rating
+        - createdAt
+
+    StarStatsResponse:
+      type: object
+      properties:
+        averageRating:
+          type: number
+          format: double
+        totalStars:
+          type: integer
+          format: int64
+      required:
+        - averageRating
+        - totalStars
 
   securitySchemes:
     Bearer:
