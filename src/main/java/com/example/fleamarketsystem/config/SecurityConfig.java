@@ -2,24 +2,40 @@ package com.example.fleamarketsystem.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+
+import com.example.fleamarketsystem.security.OAuth2LoginSuccessHandler;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 	
-	/*
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		// {bcrypt},{noop} など委譲エンコーダ
-		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-	}
-	*/
+	private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+	
+	@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
+
+    @Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
+    private String audience;
+
+    public SecurityConfig(OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
+        this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+    }
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,21 +49,20 @@ public class SecurityConfig {
                 )
         		
 				.authorizeHttpRequests(auth -> auth
-						/*
-						.requestMatchers(
-								"/login",
-								"/css/**", "/js/**", "/images/**", "/webjars/**")
+						
+						.requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/webjars/**", "/error",
+                                "/oauth2/**")
 						.permitAll()
-						*/
+						
 						
 						/* API v1 テスト用JWT無視 */
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/api/v1/items/**").permitAll()
 						.requestMatchers("/api/v1/auth/**").permitAll()
 						.requestMatchers("/api/v1/admin/users/**").permitAll()
-						.requestMatchers("api/v1/dashboard/**").permitAll()
-						.requestMatchers("api/v1/home").permitAll()
-						.requestMatchers("api/v1/my-page/**").permitAll()
+						.requestMatchers("/api/v1/dashboard/**").permitAll()
+						.requestMatchers("/api/v1/home").permitAll()
+						.requestMatchers("/api/v1/my-page/**").permitAll()
 						
 						.requestMatchers("/api/v1/orders/**").authenticated()
 						
@@ -63,31 +78,11 @@ public class SecurityConfig {
 		            })
 		        )
 						
-						/* Thymeleaf */
-						/*
-						.requestMatchers("/admin/**").hasRole("ADMIN")
-						.anyRequest().authenticated())
-						*/
-				.formLogin(form -> form.disable())
-				.logout(logout -> logout.disable())
+		        .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .successHandler(oAuth2LoginSuccessHandler))
+                .logout(logout -> logout.permitAll())
 				
-				/*
-				.formLogin(form -> form
-						.loginPage("/login")
-						.defaultSuccessUrl("/items", true) // ログイン成功後
-						.permitAll())
-				.logout(logout -> logout
-						.logoutUrl("/logout") // POST /logout
-						.logoutSuccessUrl("/login?logout")
-						.permitAll())
-				*/
-				
-				/*
-				// CSRF の設定（基本有効、Stripe Webhook のみ除外）
-		        .csrf(csrf -> csrf
-		            // Ant パターンで Webhook を除外
-		            .ignoringRequestMatchers("/orders/stripe-webhook"));
-		        */
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint((req, res, e) -> {
 							res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -96,10 +91,39 @@ public class SecurityConfig {
 									    {"error":"unauthorized"}
 									       """);
 						})
-				);
+				)
+				.oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()
+                        		)
+                        ));
 
-		return http.build();
-	}
+        return http.build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
+
+        OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+        OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
+
+        jwtDecoder.setJwtValidator(withAudience);
+
+        return jwtDecoder;
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("permissions");
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
+        return jwtAuthenticationConverter;
+    }
+
+    
 }
-
-

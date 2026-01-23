@@ -27,14 +27,16 @@ public class AppOrderService {
     private final ItemRepository itemRepository;
     private final ItemService itemService;
     private final StripeService stripeService;
-    private final LineNotifyService lineNotifyService;
+    // private final LineNotifyService lineNotifyService;
 
-    public AppOrderService(AppOrderRepository appOrderRepository, ItemRepository itemRepository, ItemService itemService, StripeService stripeService, LineNotifyService lineNotifyService) {
+    public AppOrderService(AppOrderRepository appOrderRepository, ItemRepository itemRepository, ItemService itemService, StripeService stripeService
+        // , LineNotifyService lineNotifyService
+    ) {
         this.appOrderRepository = appOrderRepository;
         this.itemRepository = itemRepository;
         this.itemService = itemService;
         this.stripeService = stripeService;
-        this.lineNotifyService = lineNotifyService;
+        // this.lineNotifyService = lineNotifyService;
     }
 
     @Transactional
@@ -78,14 +80,14 @@ public class AppOrderService {
             itemService.markItemAsSold(appOrder.getItem().getId());
             AppOrder savedOrder = appOrderRepository.save(appOrder);
 
-            // Send LINE notification to seller
-            if (savedOrder.getItem().getSeller().getLineNotifyToken() != null) {
-                String message = String.format("\n商品が購入されました！\n商品名: %s\n購入者: %s\n価格: ¥%s",
-                        savedOrder.getItem().getName(),
-                        savedOrder.getBuyer().getName(),
-                        savedOrder.getPrice());
-                lineNotifyService.sendMessage(savedOrder.getItem().getSeller().getLineNotifyToken(), message);
-            }
+            // // Send LINE notification to seller
+            // if (savedOrder.getItem().getSeller().getLineNotifyToken() != null) {
+            //     String message = String.format("\n商品が購入されました！\n商品名: %s\n購入者: %s\n価格: ¥%s",
+            //             savedOrder.getItem().getName(),
+            //             savedOrder.getBuyer().getName(),
+            //             savedOrder.getPrice());
+            //     lineNotifyService.sendMessage(savedOrder.getItem().getSeller().getLineNotifyToken(), message);
+            // }
 
             return savedOrder;
         } else {
@@ -112,13 +114,13 @@ public class AppOrderService {
         appOrder.setStatus("発送済");
         AppOrder savedOrder = appOrderRepository.save(appOrder);
 
-        // Send LINE notification to buyer
-        if (savedOrder.getBuyer().getLineNotifyToken() != null) {
-            String message = String.format("\n購入した商品が発送されました！\n商品名: %s\n出品者: %s",
-                    savedOrder.getItem().getName(),
-                    savedOrder.getItem().getSeller().getName());
-            lineNotifyService.sendMessage(savedOrder.getBuyer().getLineNotifyToken(), message);
-        }
+        // // Send LINE notification to buyer
+        // if (savedOrder.getBuyer().getLineNotifyToken() != null) {
+        //     String message = String.format("\n購入した商品が発送されました！\n商品名: %s\n出品者: %s",
+        //             savedOrder.getItem().getName(),
+        //             savedOrder.getItem().getSeller().getName());
+        //     lineNotifyService.sendMessage(savedOrder.getBuyer().getLineNotifyToken(), message);
+        // }
     }
 
     public Optional<AppOrder> getOrderById(Long orderId) {

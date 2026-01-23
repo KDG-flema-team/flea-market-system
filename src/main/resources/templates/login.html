@@ -8,20 +8,19 @@
 
 <main class="container">
   <h1>ログイン</h1>
-  <form method="post" th:action="@{/login}">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-    <div class="field">
-      <label>メール</label>
-      <input type="text" name="username" required>
-    </div>
-    <div class="field">
-      <label>パスワード</label>
-      <input type="password" name="password" required>
-    </div>
-    <button type="submit">ログイン</button>
-  </form>
-  <p th:if="${param.error}">ログインに失敗しました。</p>
-  <p th:if="${param.logout}">ログアウトしました。</p>
+  <p style="margin-bottom: 16px;">このアプリではメール/パスワードは使いません。以下のプロバイダーからログインしてください。</p>
+
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+    <a th:href="@{/oauth2/authorization/google}" style="display: inline-block; padding: 10px 20px; background-color: #db4437; color: white; text-decoration: none; border-radius: 4px;">
+      Googleでログイン
+    </a>
+    <a th:href="@{/oauth2/authorization/github}" style="display: inline-block; padding: 10px 20px; background-color: #333; color: white; text-decoration: none; border-radius: 4px;">
+      GitHubでログイン
+    </a>
+  </div>
+
+  <p style="margin-top: 12px;" th:if="${param.error}">ログインに失敗しました。別のプロバイダーをお試しください。</p>
+  <p style="margin-top: 12px;" th:if="${param.logout}">ログアウトしました。</p>
 </main>
 </body>
 </html>

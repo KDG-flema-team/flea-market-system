@@ -26,7 +26,16 @@
         <p><strong>名前:</strong> <span th:text="${user.name}"></span></p>
         <p><strong>メールアドレス:</strong> <span th:text="${user.email}"></span></p>
         <p><strong>役割:</strong> <span th:text="${user.role}"></span></p>
-
+        
+        <!-- DEBUG: OAuth2 / JWT の全属性を表示（開発用・あとで削除してください） -->
+        <div th:if="${authAttributes != null}">
+            <h2>認証プロファイル（デバッグ）</h2>
+            <ul>
+                <li th:each="entry : ${authAttributes.entrySet()}">
+                    <strong th:text="${entry.key}"></strong>: <span th:text="${entry.value}"></span>
+                </li>
+            </ul>
+        </div>
     </div>
 </body>
 </html>

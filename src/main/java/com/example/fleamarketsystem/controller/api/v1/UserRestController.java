@@ -21,7 +21,7 @@ import com.example.fleamarketsystem.service.ReviewService;
 import com.example.fleamarketsystem.service.UserService;
 
 @RestController
-@RequestMapping("/api/v1/my-page")
+@RequestMapping("/api/v1/my-page-haruki")
 public class UserRestController {
 	
 	private final UserService userService;
@@ -33,6 +33,7 @@ public class UserRestController {
     private final MyPageOrderService myPageOrderService;
 
     public UserRestController(
+    		
             UserService userService,
             ItemService itemService,
             AppOrderService appOrderService,
@@ -40,7 +41,9 @@ public class UserRestController {
             ReviewService reviewService,
             AuthUserResolver authUserResolver,
             MyPageOrderService myPageOrderService
+            
     ) {
+    	
         this.userService = userService;
         this.itemService = itemService;
         this.appOrderService = appOrderService;
@@ -48,6 +51,7 @@ public class UserRestController {
         this.reviewService = reviewService;
         this.authUserResolver = authUserResolver;
         this.myPageOrderService = myPageOrderService;
+        
     }
     
     @GetMapping

@@ -153,7 +153,6 @@ CREATE TABLE users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL,            -- 'USER' / 'ADMIN'
-  line_notify_token VARCHAR(255),
   enabled BOOLEAN NOT NULL DEFAULT TRUE,
 
   -- ★ BAN系（最初から持たせる）

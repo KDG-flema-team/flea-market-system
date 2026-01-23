@@ -24,6 +24,9 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(name = "auth0_id", unique = true)
+	private String auth0Id;
+
 	@Column(nullable = false)
 	private String name;
 
@@ -36,8 +39,8 @@ public class User {
 	@Column(nullable = false)
 	private String role; // "USER" or "ADMIN"
 
-	@Column(name = "line_notify_token")
-	private String lineNotifyToken;
+	@Column(nullable = false)
+	private String rank = "bronze"; // "bronze", "silver", "gold", "platinum"
 
 	@Column(nullable = false)
 	private boolean enabled = true;
