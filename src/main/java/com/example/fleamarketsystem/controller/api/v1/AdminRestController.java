@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.dto.AdminStatisticsResponse;
+import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.service.AppOrderService;
 
 @RestController
@@ -31,6 +33,9 @@ public class AdminRestController {
        ========================= */
     @GetMapping("/statistics")
     public AdminStatisticsResponse getStatistics(
+    		
+    		@LoginUser User AdminUser,
+    		
             @RequestParam(value = "startDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate startDate,
@@ -59,6 +64,9 @@ public class AdminRestController {
        ========================= */
     @GetMapping(value = "/statistics/csv", produces = "text/csv")
     public void exportStatisticsCsv(
+    		
+    		@LoginUser User AdminUser,
+    		
             @RequestParam(value = "startDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate startDate,
