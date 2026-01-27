@@ -48,7 +48,12 @@ public class StarService {
         star.setComment(comment);
         star.setCreatedAt(LocalDateTime.now());
 
-        return starRepository.save(star);
+        Star saved = starRepository.save(star);
+        
+        // Update target user's rank based on average rating
+        updateUserRankByAverageRating(targetUserId);
+        
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -84,7 +89,12 @@ public class StarService {
         star.setRating(rating);
         star.setComment(comment);
 
-        return starRepository.save(star);
+        Star updated = starRepository.save(star);
+        
+        // Update target user's rank based on average rating
+        updateUserRankByAverageRating(star.getTargetUser().getId());
+        
+        return updated;
     }
 
     @Transactional
@@ -96,6 +106,39 @@ public class StarService {
             throw new RuntimeException("You can only delete your own ratings");
         }
 
+        Long targetUserId = star.getTargetUser().getId();
         starRepository.delete(star);
+        
+        // Update target user's rank based on average rating
+        updateUserRankByAverageRating(targetUserId);
+    }
+
+    /**
+     * Update user's rank based on their average rating
+     * bronze: 0.0 - 2.0
+     * silver: 2.1 - 3.5
+     * gold: 3.6 - 4.5
+     * platinum: 4.6 - 5.0
+     */
+    @Transactional
+    public void updateUserRankByAverageRating(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Double avgRating = starRepository.getAverageRatingForUser(userId);
+        
+        if (avgRating == null || avgRating == 0.0) {
+            user.setRank("bronze");
+        } else if (avgRating <= 2.0) {
+            user.setRank("bronze");
+        } else if (avgRating <= 3.5) {
+            user.setRank("silver");
+        } else if (avgRating <= 4.5) {
+            user.setRank("gold");
+        } else {
+            user.setRank("platinum");
+        }
+
+        userRepository.save(user);
     }
 }

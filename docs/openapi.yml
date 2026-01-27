@@ -602,6 +602,76 @@ paths:
               schema:
                 $ref: "#/components/schemas/StarStatsResponse"
 
+  /stars/{starId}:
+    put:
+      tags: [Stars]
+      summary: Update a star rating
+      description: Update the rating and comment for a star rating created by the authenticated user.
+      security:
+        - Bearer: []
+      parameters:
+        - name: starId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StarRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StarResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    delete:
+      tags: [Stars]
+      summary: Delete a star rating
+      description: Delete a star rating created by the authenticated user.
+      security:
+        - Bearer: []
+      parameters:
+        - name: starId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
   /chat/{itemId}:
     get:
       tags: [Chat]

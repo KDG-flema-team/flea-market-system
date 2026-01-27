@@ -6,9 +6,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,6 +72,42 @@ public class StarRestController {
         Double averageRating = (Double) stats.getOrDefault("averageRating", 0.0);
         Long totalStars = stats.get("totalStars") == null ? 0L : (Long) stats.get("totalStars");
         return ResponseEntity.ok(new StarStatsResponse(averageRating, totalStars));
+    }
+
+    @PutMapping("/{starId}")
+    public ResponseEntity<?> updateStar(
+            Authentication authentication,
+            @PathVariable Long starId,
+            @Valid @RequestBody StarRequest request
+    ) {
+        AuthUser me = authUserResolver.resolve(authentication);
+
+        try {
+            Star updated = starService.updateStar(
+                    starId,
+                    me.userId(),
+                    request.rating(),
+                    request.comment()
+            );
+            return ResponseEntity.ok(toResponse(updated));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{starId}")
+    public ResponseEntity<?> deleteStar(
+            Authentication authentication,
+            @PathVariable Long starId
+    ) {
+        AuthUser me = authUserResolver.resolve(authentication);
+
+        try {
+            starService.deleteStar(starId, me.userId());
+            return ResponseEntity.ok(Map.of("message", "Star deleted successfully"));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
     }
 
     private StarResponse toResponse(Star star) {
