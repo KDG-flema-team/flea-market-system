@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,11 +11,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.entity.User;
-import com.example.fleamarketsystem.security.AuthUser;
-import com.example.fleamarketsystem.security.AuthUserResolver;
 import com.example.fleamarketsystem.service.AppOrderService;
-import com.example.fleamarketsystem.service.UserService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 
@@ -25,17 +22,11 @@ import com.stripe.model.PaymentIntent;
 public class AppOrderRestController {
 	
 	private final AppOrderService appOrderService;
-    private final UserService userService;
-    private final AuthUserResolver authUserResolver;
     
     public AppOrderRestController(
-            AppOrderService appOrderService,
-            UserService userService,
-            AuthUserResolver authUserResolver
+            AppOrderService appOrderService
     ) {
         this.appOrderService = appOrderService;
-        this.userService = userService;
-        this.authUserResolver = authUserResolver;
     }
     
     /* =========================
@@ -44,12 +35,10 @@ public class AppOrderRestController {
     @PostMapping("/initiate")
     public ResponseEntity<?> initiatePurchase(
     		
-    		Authentication authentication,
+    		@LoginUser User buyer,
     		@RequestBody Map<String, Long> body
     		
     		) throws StripeException {
-    	
-    	AuthUser me = authUserResolver.resolve(authentication);
     	
     	Long itemId = body.get("itemId");
     	
@@ -57,9 +46,6 @@ public class AppOrderRestController {
          return ResponseEntity.badRequest()
                  .body(Map.of("error", "itemId is required"));
          }
-    	
-    	User buyer = userService.getUserByEmail(me.email())
-                .orElseThrow();
 
         PaymentIntent paymentIntent =
                 appOrderService.initiatePurchase(itemId, buyer);
@@ -76,6 +62,7 @@ public class AppOrderRestController {
     @PostMapping("/complete")
     public ResponseEntity<?> completePurchase(
     		
+    		@LoginUser User buyer,
     		@RequestBody Map<String, String> body
     		
     	) throws StripeException {
@@ -87,7 +74,7 @@ public class AppOrderRestController {
     				.body(Map.of("error", "paymentIntentId is required"));
     		}
     	
-    	appOrderService.completePurchase(paymentIntentId);
+    	appOrderService.completePurchase(paymentIntentId, buyer);
 
     	return ResponseEntity.ok(Map.of(
     			"message", "purchase completed"
@@ -100,10 +87,13 @@ public class AppOrderRestController {
     @PostMapping("/{id}/ship")
     @PreAuthorize("hasAnyRole('ADMIN', 'SELLER')")
     public ResponseEntity<?> shipOrder(	
+    		
+    		@LoginUser User operator,
     		@PathVariable Long id	
+    		
     	) {
     	
-    	appOrderService.markOrderAsShipped(id);
+    	appOrderService.markOrderAsShipped(id, operator);
     	return ResponseEntity.ok(Map.of("message", "order shipped"));
     }
     

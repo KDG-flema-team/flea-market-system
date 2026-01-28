@@ -56,4 +56,9 @@ public class User {
 
 	@Column(name = "banned_by_admin_id")
 	private Integer bannedByAdminId;
+	
+	public boolean hasRole(String role) {
+	    return this.role.equals(role);
+	}
+
 }
