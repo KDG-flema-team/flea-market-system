@@ -428,6 +428,19 @@ paths:
         "200":
           description: Report submitted
 
+  /home:
+    get:
+      tags: [Home]
+      summary: Get home redirect info
+      description: Returns the role and recommended redirect path for the current user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeResponse"
+
   # ============================
   # Order Endpoints
   # ============================
@@ -507,6 +520,78 @@ paths:
           description: Received
 
   # ============================
+  # Additional Order Endpoints
+  # ============================
+  /orders/initiate:
+    post:
+      tags: [Orders]
+      summary: Initiate purchase (create PaymentIntent)
+      description: Creates a Stripe PaymentIntent and returns client secret.
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemId]
+              properties:
+                itemId:
+                  type: integer
+                  format: int64
+      responses:
+        "200":
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentInitiateResponse"
+
+  /orders/complete:
+    post:
+      tags: [Orders]
+      summary: Complete purchase
+      description: Finalize purchase after client-side confirmation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentIntentId]
+              properties:
+                paymentIntentId:
+                  type: string
+      responses:
+        "200":
+          description: Purchase completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /orders/stripe-webhook:
+    post:
+      tags: [Orders]
+      summary: Stripe webhook endpoint
+      description: Endpoint for receiving Stripe webhook events. Signature header `Stripe-Signature` is expected.
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Webhook received
+
   # Review & Chat Endpoints
   # ============================
   /reviews:
@@ -952,8 +1037,553 @@ paths:
                 type: string
                 format: binary
 
+  /admin/statistics/csv:
+    get:
+      tags: [Admin]
+      summary: Export statistics as CSV
+      description: Export aggregated sales/statistics as CSV file.
+      security:
+        - Bearer: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+
+  /admin/notifications:
+    get:
+      tags: [Admin]
+      summary: List all notifications
+      description: Get a list of all notifications created by administrators.
+      security:
+        - Bearer: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of notifications per page.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: category
+          in: query
+          description: Filter by notification category.
+          required: false
+          schema:
+            type: string
+        - name: isImportant
+          in: query
+          description: Filter by importance status.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminNotification"
+                  totalPages:
+                    type: integer
+                  currentPage:
+                    type: integer
+                  totalItems:
+                    type: integer
+                required:
+                  - notifications
+                  - totalPages
+                  - currentPage
+                  - totalItems
+
+    post:
+      tags: [Admin]
+      summary: Create a notification
+      description: Create a notification to be sent to users.
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message, category]
+              properties:
+                message:
+                  type: string
+                  description: User-facing notification text.
+                  minLength: 1
+                  maxLength: 500
+                isImportant:
+                  type: boolean
+                  description: If true, the notification is marked as important.
+                  default: false
+                linkUrl:
+                  type: string
+                  description: Optional URL for deep linking from the notification.
+                  maxLength: 2000
+                category:
+                  type: string
+                  description: Logical category of the notification (e.g., order, chat, admin).
+                  enum: [order, chat, admin, system, promotion]
+                targetUserIds:
+                  type: array
+                  description: Optional list of specific user IDs to send the notification to. If not provided, notification is sent to all users.
+                  items:
+                    type: integer
+                    format: int64
+      responses:
+        "201":
+          description: Notification created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminNotification"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /admin/notifications/{id}:
+    get:
+      tags: [Admin]
+      summary: Get notification details
+      description: Get details of a specific notification including delivery statistics.
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminNotificationDetail"
+        "404":
+          description: Not Found
+
+    put:
+      tags: [Admin]
+      summary: Update a notification
+      description: Update a notification's content. Only unread notifications can be updated.
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Updated notification text.
+                  minLength: 1
+                  maxLength: 500
+                isImportant:
+                  type: boolean
+                  description: Updated importance status.
+                linkUrl:
+                  type: string
+                  description: Updated URL for deep linking.
+                  maxLength: 2000
+                category:
+                  type: string
+                  description: Updated category.
+                  enum: [order, chat, admin, system, promotion]
+      responses:
+        "200":
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminNotification"
+        "400":
+          description: Bad Request - Cannot update notification that has been read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "404":
+          description: Not Found
+
+    delete:
+      tags: [Admin]
+      summary: Delete a notification
+      description: Delete a notification. This will remove it for all users.
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Notification deleted
+        "404":
+          description: Not Found
+
+  /notifications:
+    get:
+      tags: [Notification]
+      summary: Get notifications
+      description: Returns notifications for the authenticated user with cursor-based pagination.
+      security:
+        - Bearer: []
+      parameters:
+        - name: startId
+          in: query
+          description: ID to start listing from (exclusive). Use the previous response's nextStartId.
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          description: Number of notifications to return.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+            minimum: 1
+            maximum: 50
+        - name: onlyUnread
+          in: query
+          description: If true, returns only unread notifications.
+          required: false
+          schema:
+            type: boolean
+        - name: category
+          in: query
+          description: Filter by notification category.
+          required: false
+          schema:
+            type: string
+            enum: [order, chat, admin, system, promotion]
+        - name: isImportant
+          in: query
+          description: Filter by importance status.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /notifications/unread-count:
+    get:
+      tags: [Notification]
+      summary: Get unread notification count
+      description: Returns the total number of unread notifications for the authenticated user.
+      security:
+        - Bearer: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+                    format: int32
+                    description: Total number of unread notifications.
+                required:
+                  - unreadCount
+
+  /notifications/read-all:
+    post:
+      tags: [Notification]
+      summary: Mark all notifications as read
+      description: Mark all unread notifications as read for the authenticated user.
+      security:
+        - Bearer: []
+      responses:
+        "200":
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedCount:
+                    type: integer
+                    format: int32
+                    description: Number of notifications marked as read.
+                required:
+                  - updatedCount
+
+  /notifications/{id}:
+    get:
+      tags: [Notification]
+      summary: Get notification details
+      description: Get details of a specific notification.
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "404":
+          description: Not Found
+
+    delete:
+      tags: [Notification]
+      summary: Delete a notification
+      description: Delete a notification for the authenticated user.
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Notification deleted
+        "404":
+          description: Not Found
+
+  /notifications/{id}/read:
+    patch:
+      tags: [Notification]
+      summary: Mark notification as read
+      description: Mark a specific notification as read.
+      security:
+        - Bearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "404":
+          description: Not Found
+
+
 components:
   schemas:
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        message:
+          type: string
+          description: User-facing notification text.
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the notification was read.
+        isRead:
+          type: boolean
+        isImportant:
+          type: boolean
+        linkUrl:
+          type: string
+          nullable: true
+          description: Optional URL for deep linking from the notification.
+        category:
+          type: string
+          description: Logical category of the notification.
+          enum: [order, chat, admin, system, promotion]
+      required:
+        - id
+        - message
+        - createdAt
+        - isRead
+        - isImportant
+        - category
+
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        nextStartId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Use as startId to fetch the next page; null when there is no next page.
+        hasMore:
+          type: boolean
+        unreadCount:
+          type: integer
+          format: int32
+          description: Total unread notifications for the authenticated user.
+      required:
+        - notifications
+        - hasMore
+        - unreadCount
+
+    AdminNotification:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        message:
+          type: string
+          description: User-facing notification text.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the notification was last updated.
+        isImportant:
+          type: boolean
+        linkUrl:
+          type: string
+          nullable: true
+          description: Optional URL for deep linking from the notification.
+        category:
+          type: string
+          description: Logical category of the notification.
+          enum: [order, chat, admin, system, promotion]
+        createdBy:
+          type: integer
+          format: int64
+          description: ID of the admin user who created this notification.
+        targetUserIds:
+          type: array
+          nullable: true
+          description: List of specific user IDs if notification was targeted, null if sent to all users.
+          items:
+            type: integer
+            format: int64
+      required:
+        - id
+        - message
+        - createdAt
+        - isImportant
+        - category
+        - createdBy
+
+    AdminNotificationDetail:
+      allOf:
+        - $ref: "#/components/schemas/AdminNotification"
+        - type: object
+          properties:
+            deliveryStats:
+              type: object
+              description: Statistics about notification delivery and read status.
+              properties:
+                totalRecipients:
+                  type: integer
+                  format: int32
+                  description: Total number of users who received this notification.
+                readCount:
+                  type: integer
+                  format: int32
+                  description: Number of users who have read this notification.
+                unreadCount:
+                  type: integer
+                  format: int32
+                  description: Number of users who have not read this notification.
+                deletedCount:
+                  type: integer
+                  format: int32
+                  description: Number of users who have deleted this notification.
+              required:
+                - totalRecipients
+                - readCount
+                - unreadCount
+                - deletedCount
+          required:
+            - deliveryStats
+
     User:
       type: object
       properties:
@@ -1192,6 +1822,38 @@ components:
       required:
         - averageRating
         - totalStars
+
+    PaymentInitiateResponse:
+      type: object
+      properties:
+        clientSecret:
+          type: string
+        paymentIntentId:
+          type: string
+      required:
+        - clientSecret
+        - paymentIntentId
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    HomeResponse:
+      type: object
+      properties:
+        role:
+          type: string
+          description: Role of the current user (GUEST/USER/ADMIN)
+        redirect:
+          type: string
+          description: URL path to redirect the user to
+      required:
+        - role
+        - redirect
 
   securitySchemes:
     Bearer:

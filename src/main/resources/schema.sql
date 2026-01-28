@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS item CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
 DROP TABLE IF EXISTS user_complaint CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS info CASCADE;
+DROP TABLE IF EXISTS notice CASCADE;
 
 -- ========== CREATE ==========
 CREATE TABLE users (
@@ -131,6 +133,30 @@ CREATE TABLE report (
   FOREIGN KEY (reported_user_id) REFERENCES users(id),
   FOREIGN KEY (reviewed_by_admin_id) REFERENCES users(id)
 );
+
+-- ========== INFO (お知らせ) ==========
+CREATE TABLE info (
+	id				SERIAL	PRIMARY KEY,
+	title			VARCHAR(255),
+	content		VARCHAR(255),
+	image_url	VARCHAR(255),
+	is_important	BOOLEAN	NOT NULL	DEFAULT	FALSE,
+	create_at		TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ========== NOTICE() ==========
+CREATE TABLE notice (
+	id		SERIAL	PRIMARY KEY,
+	title	VARCHAR(40),
+	content	TEXT,
+	created_at	TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	user_id	INT	NOT NULL,
+	is_read	BOOLEAN	DEFAULT FALSE	NOT NULL,
+	CONSTRAINT fk_user_id
+		FOREIGN KEY (user_id)
+		REFERENCES users(id)
+);
+
 
 -- ========== INDEX ==========
 CREATE INDEX IF NOT EXISTS idx_users_banned           ON users(banned);
