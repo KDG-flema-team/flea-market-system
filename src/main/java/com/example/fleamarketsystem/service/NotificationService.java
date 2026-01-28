@@ -115,4 +115,26 @@ public class NotificationService {
             .filter(n -> !n.getIsRead())
             .count();
     }
+
+    @Transactional(readOnly = true)
+    public NotificationResponse getNotificationById(Long notificationId, Long userId) {
+        // Try to find as Notice first
+        var notice = noticeRepository.findById(notificationId);
+        if (notice.isPresent()) {
+            Notice n = notice.get();
+            // Check if the notice belongs to the user
+            if (!n.getUser().getId().equals(userId)) {
+                throw new RuntimeException("Unauthorized");
+            }
+            return NotificationResponse.fromNotice(n);
+        }
+        
+        // Try to find as Info
+        var info = infoRepository.findById(notificationId);
+        if (info.isPresent()) {
+            return NotificationResponse.fromInfo(info.get());
+        }
+        
+        throw new RuntimeException("Notification not found");
+    }
 }

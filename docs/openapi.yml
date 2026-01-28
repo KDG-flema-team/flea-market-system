@@ -1473,7 +1473,24 @@ components:
         category:
           type: string
           description: Logical category of the notification.
-          enum: [order, chat, admin, system, promotion]
+          enum: [notice, info, order, chat, admin, system, promotion]
+        title:
+          type: string
+          description: Notification title.
+        body:
+          type: string
+          description: Notification body content.
+        date:
+          type: string
+          description: Formatted date string (e.g., "2026年01月28日 14:30").
+        type:
+          type: string
+          description: Type of notification.
+          enum: [operation, transaction]
+        relatedItemId:
+          type: string
+          nullable: true
+          description: Related item ID if applicable.
       required:
         - id
         - message
@@ -1481,6 +1498,10 @@ components:
         - isRead
         - isImportant
         - category
+        - title
+        - body
+        - date
+        - type
 
     NotificationListResponse:
       type: object
