@@ -30,7 +30,16 @@ CREATE TABLE users (
 
 CREATE TABLE category (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(50) NOT NULL UNIQUE
+  name VARCHAR(50) NOT NULL UNIQUE,
+  parent_id INT,
+  
+  CONSTRAINT fk_category_parent
+  	FOREIGN KEY (parent_id)
+  	REFERENCES category(id)
+  	ON DELETE CASCADE,
+  	
+  	UNIQUE(name, parent_id)
+  
 );
 
 CREATE TABLE item (
