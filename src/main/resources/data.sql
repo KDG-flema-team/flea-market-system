@@ -1,10 +1,11 @@
 -- users
 -- auth0を使用、参考のサンプルデータ
 INSERT INTO users (auth0_id, name, email, password, role, rank, enabled, banned) VALUES
-  ('auth0|sellerA', '出品者A', 'sellerA@example.com', 'password', 'user', 'silver', TRUE, FALSE),
-  ('auth0|buyerB',  '購入者B', 'xyz@example.com',     'password', 'user',  'bronze', TRUE, FALSE),
-  ('auth0|adminC',  '管理者C', 'adminC@example.com',   'password', 'admin',  'gold',   TRUE, FALSE),
-  ('google-oauth2|117827171357457735743', 'テストユーザー', 'testuser@example.com', 'password', 'user', 'bronze', TRUE, FALSE);
+  ('auth0|697c2f13cedce9109f5bce8d', '出品者A', 'sellerA@example.com', 'VPGGVmnN!yC39EY', 'user', 'silver', TRUE, FALSE),
+  ('auth0|697c32d79f91842cb6b36cc4',  '購入者B', 'xyz@example.com',     'VPGGVmnN!yC39EY', 'user',  'bronze', TRUE, FALSE),
+  ('auth0|697c32e7ba50d6680a8f2d45',  '管理者C', 'adminC@example.com',   'VPGGVmnN!yC39EY', 'admin',  'gold',   TRUE, FALSE),
+  ('google-oauth2|117827171357457735743', 'ひろと', 'hirohirohiro112607@gmail.com', 'password', 'user', 'bronze', TRUE, FALSE)
+  ;
 
 -- category
 INSERT INTO category (name) VALUES
