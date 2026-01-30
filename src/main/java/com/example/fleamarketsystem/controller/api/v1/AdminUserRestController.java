@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,9 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fleamarketsystem.annotation.LoginUser;
+import com.example.fleamarketsystem.dto.AdminUserResponse;
 import com.example.fleamarketsystem.dto.BanRequest;
 import com.example.fleamarketsystem.entity.User;
-import com.example.fleamarketsystem.repository.UserRepository;
 import com.example.fleamarketsystem.service.AdminUserService;
 
 @RestController
@@ -26,11 +26,9 @@ import com.example.fleamarketsystem.service.AdminUserService;
 public class AdminUserRestController {
 
     private final AdminUserService service;
-    private final UserRepository users;
 
-    public AdminUserRestController(AdminUserService service, UserRepository users) {
+    public AdminUserRestController(AdminUserService service) {
         this.service = service;
-        this.users = users;
     }
 
     /**
@@ -38,7 +36,8 @@ public class AdminUserRestController {
      * GET /admin/users
      */
     @GetMapping
-    public List<User> list(
+    public List<AdminUserResponse> list(
+    		@LoginUser User adminUser,
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "sort", defaultValue = "id") String sort
     ) {
@@ -54,7 +53,7 @@ public class AdminUserRestController {
                     .toList();
         }
 
-        return switch (sort) {
+        list = switch (sort) {
             case "name" -> list.stream()
                     .sorted(Comparator.comparing(
                             User::getName,
@@ -70,6 +69,10 @@ public class AdminUserRestController {
                     .toList();
             default -> list;
         };
+        
+        return list.stream()
+        		.map(AdminUserResponse::fromEntity)
+                .toList();
     }
 
     /**
@@ -77,8 +80,13 @@ public class AdminUserRestController {
      * GET /admin/users/{id}
      */
     @GetMapping("/{id}")
-    public User detail(@PathVariable Long id) {
-        return service.findUser(id);
+    public AdminUserResponse detail(
+    		@LoginUser User adminUser,
+    		@PathVariable Long id
+    ) {
+        User user = service.findUser(id);
+        
+        return AdminUserResponse.fromEntity(user);
     }
 
     /**
@@ -87,13 +95,11 @@ public class AdminUserRestController {
      */
     @PostMapping("/{id}/ban")
     public void updateBanStatus(
+    		@LoginUser User adminUser,
             @PathVariable Long id,
-            @RequestBody BanRequest request,
-            Authentication authentication
+            @RequestBody BanRequest request
     ) {
-        Long adminId = users.findByEmailIgnoreCase(authentication.getName())
-                .map(User::getId)
-                .orElseThrow();
+        Long adminId = adminUser.getId();
 
         if (request.banned()) {
             service.banUser(

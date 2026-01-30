@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,13 +30,17 @@ public class AppOrderService {
     private final StripeService stripeService;
     // private final LineNotifyService lineNotifyService;
 
-    public AppOrderService(AppOrderRepository appOrderRepository, ItemRepository itemRepository, ItemService itemService, StripeService stripeService
-        // , LineNotifyService lineNotifyService
-    ) {
+    public AppOrderService(
+    		AppOrderRepository appOrderRepository,
+    		ItemRepository itemRepository,
+    		ItemService itemService,
+    		StripeService stripeService
+    		// , LineNotifyService lineNotifyService
+    		) {
         this.appOrderRepository = appOrderRepository;
         this.itemRepository = itemRepository;
         this.itemService = itemService;
-        this.stripeService = stripeService;
+        this.stripeService = stripeService;        
         // this.lineNotifyService = lineNotifyService;
     }
 
@@ -59,13 +64,16 @@ public class AppOrderService {
         appOrder.setPrice(item.getPrice());
         appOrder.setStatus("決済待ち"); // New status for pending payment
         appOrder.setCreatedAt(LocalDateTime.now()); // Set creation time
+        
+        appOrder.setPaymentIntentId(paymentIntent.getId());
+        
         appOrderRepository.save(appOrder);
 
         return paymentIntent;
     }
 
     @Transactional
-    public AppOrder completePurchase(String paymentIntentId) throws StripeException {
+    public AppOrder completePurchase(String paymentIntentId, User buyer) throws StripeException {
         PaymentIntent paymentIntent = stripeService.retrievePaymentIntent(paymentIntentId);
 
         if ("succeeded".equals(paymentIntent.getStatus())) {
@@ -75,6 +83,10 @@ public class AppOrderService {
                     .filter(o -> "決済待ち".equals(o.getStatus()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No pending order found for this payment."));
+            
+            if (!appOrder.getBuyer().getId().equals(buyer.getId())) {
+            	throw new SecurityException("あなたの注文ではありません");
+            }
 
             appOrder.setStatus("購入済");
             itemService.markItemAsSold(appOrder.getItem().getId());
@@ -108,10 +120,24 @@ public class AppOrderService {
     }
 
     @Transactional
-    public void markOrderAsShipped(Long orderId) {
-        AppOrder appOrder = appOrderRepository.findById(orderId)
+    public void markOrderAsShipped(Long orderId, User operator) {
+    	
+        AppOrder appOrder = 
+        		appOrderRepository
+        		.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        
+        boolean isSeller = appOrder
+        		.getItem().getSeller().getId().equals(operator.getId());
+        
+        boolean isAdmin = operator.hasRole("ADMIN");
+        
+        if (!isSeller && !isAdmin) {
+            throw new AccessDeniedException("発送権限がありません");
+        }
+        
         appOrder.setStatus("発送済");
+        
         AppOrder savedOrder = appOrderRepository.save(appOrder);
 
         // // Send LINE notification to buyer
