@@ -18,8 +18,8 @@ CREATE TABLE users (
   auth0_id VARCHAR(255) UNIQUE,             -- ★ Auth0のユーザーID（ローカルではNULL許容）
   name VARCHAR(50) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(10) NOT NULL CHECK (role IN ('USER', 'ADMIN')),
+  password VARCHAR(255) ,                 -- ★ Auth0使用時はNULL許容
+  role VARCHAR(10) NOT NULL CHECK (role IN ('user', 'admin')),
   rank VARCHAR(10) NOT NULL DEFAULT 'bronze' CHECK (rank IN ('bronze', 'silver', 'gold', 'platinum')),
   enabled BOOLEAN NOT NULL DEFAULT TRUE,
 
