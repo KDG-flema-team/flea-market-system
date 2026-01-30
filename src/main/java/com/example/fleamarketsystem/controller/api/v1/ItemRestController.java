@@ -3,7 +3,6 @@ package com.example.fleamarketsystem.controller.api.v1;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,13 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.dto.ItemRequest;
 import com.example.fleamarketsystem.dto.ItemResponse;
 import com.example.fleamarketsystem.entity.Category;
 import com.example.fleamarketsystem.entity.Item;
 import com.example.fleamarketsystem.entity.User;
-import com.example.fleamarketsystem.security.AuthUser;
-import com.example.fleamarketsystem.security.AuthUserResolver;
 import com.example.fleamarketsystem.service.CategoryService;
 import com.example.fleamarketsystem.service.FavoriteService;
 import com.example.fleamarketsystem.service.ItemService;
@@ -36,20 +34,16 @@ public class ItemRestController {
     private final FavoriteService favoriteService;
     private final UserService userService;
     
-    private final AuthUserResolver authUserResolver;
-    
     public ItemRestController(
             ItemService itemService,
             CategoryService categoryService,
             FavoriteService favoriteService,
-            UserService userService,
-            AuthUserResolver authUserResolver
+            UserService userService
         ) {
             this.itemService = itemService;
             this.categoryService = categoryService;
             this.favoriteService = favoriteService;
             this.userService = userService;
-            this.authUserResolver = authUserResolver;
         }
     
     
@@ -81,12 +75,11 @@ public class ItemRestController {
     
     @PostMapping
     public ItemResponse create(
-    		Authentication authentication,
+    		@LoginUser User me,
     		@RequestBody @Valid ItemRequest request
     ) {
-    	AuthUser me = authUserResolver.resolve(authentication);
     	
-        User seller = userService.getUserByEmail(me.email())
+        User seller = userService.getUserByEmail(me.getEmail())
             .orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません"));
 
         Category category = categoryService.getCategoryById(request.categoryId())
@@ -108,13 +101,12 @@ public class ItemRestController {
     @PutMapping("/{id}")
     public ItemResponse update(
         @PathVariable Long id,
-        Authentication authentication,
+        @LoginUser User me,
         @RequestBody @Valid ItemRequest request
     ) {
         Item item = itemService.getItemById(id).orElseThrow();
-        AuthUser me = authUserResolver.resolve(authentication);
 
-        if (!item.getSeller().getId().equals(me.userId())) {
+        if (!item.getSeller().getId().equals(me.getId())) {
             throw new RuntimeException("Forbidden");
         }
 
@@ -135,12 +127,11 @@ public class ItemRestController {
     @DeleteMapping("/{id}")
     public void delete(
         @PathVariable Long id,
-        Authentication authentication
+        @LoginUser User me
     ) {
         Item item = itemService.getItemById(id).orElseThrow();
-        AuthUser me = authUserResolver.resolve(authentication);
 
-        if (!item.getSeller().getId().equals(me.userId())) {
+        if (!item.getSeller().getId().equals(me.getId())) {
             throw new RuntimeException("Forbidden");
         }
 
@@ -153,11 +144,10 @@ public class ItemRestController {
     @PostMapping("/{id}/favorite")
     public void favorite(
         @PathVariable Long id,
-        Authentication authentication
+        @LoginUser User me
     ) {
-    	AuthUser me = authUserResolver.resolve(authentication);
     	
-        User user = userService.getUserByEmail(me.email())
+        User user = userService.getUserByEmail(me.getEmail())
         		.orElseThrow();
         
         favoriteService.addFavorite(user, id);
@@ -166,11 +156,10 @@ public class ItemRestController {
     @DeleteMapping("/{id}/favorite")
     public void unfavorite(
         @PathVariable Long id,
-        Authentication authentication
+        @LoginUser User me
     ) {
-    	AuthUser me = authUserResolver.resolve(authentication);
     	
-        User user = userService.getUserByEmail(me.email())
+        User user = userService.getUserByEmail(me.getEmail())
         		.orElseThrow();
         favoriteService.removeFavorite(user, id);
     }
