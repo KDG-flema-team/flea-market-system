@@ -40,6 +40,9 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
+				// CORS有効化
+				.cors(cors -> {})
+				
 				// REST なので CSRF 無効
         		.csrf(csrf -> csrf.disable())
         		
@@ -54,8 +57,12 @@ public class SecurityConfig {
                                 "/oauth2/**")
 						.permitAll()
 						
+						/*
+						.requestMatchers("/api/v1/**").permitAll()
+						*/
 						
 						/* API v1 テスト用JWT無視 */
+						
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/api/v1/items/**").permitAll()
 						.requestMatchers("/api/v1/auth/**").permitAll()
@@ -68,6 +75,7 @@ public class SecurityConfig {
 						
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 						.requestMatchers("/api/v1/**").authenticated()
+						
 						)
 				// Basic 認証を Lambda で全体に適用
 		        .httpBasic(httpBasic -> httpBasic
