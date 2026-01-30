@@ -1,6 +1,5 @@
 package com.example.fleamarketsystem.config;
 
-
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -39,9 +38,9 @@ public class SecurityConfig {
         @Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
         private String audience;
 
-        public SecurityConfig(OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
+    public SecurityConfig(OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
                 this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
-        }
+        };
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
