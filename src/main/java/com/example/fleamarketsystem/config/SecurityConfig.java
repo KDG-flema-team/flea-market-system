@@ -135,6 +135,7 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                                 .requestMatchers("/error").permitAll()
                                                 .requestMatchers("/api/v1/items/**").permitAll()
                                                 .requestMatchers("/api/v1/admin/users/**").permitAll()

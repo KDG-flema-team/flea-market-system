@@ -32,7 +32,8 @@ CREATE TABLE users (
 
 CREATE TABLE category (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(50) NOT NULL UNIQUE
+  name VARCHAR(50) NOT NULL UNIQUE,
+  parent_id INT
 );
 
 CREATE TABLE item (
