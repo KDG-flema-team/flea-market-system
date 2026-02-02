@@ -38,13 +38,17 @@ public class SecurityConfig {
         @Value("${spring.security.oauth2.resourceserver.jwt.audiences}")
         private String audience;
 
-    public SecurityConfig(OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
+        public SecurityConfig(OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) {
                 this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
-        };
+        }
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
+                                // CORS有効化
+                                .cors(cors -> {
+                                })
+
                                 // REST なので CSRF 無効
                                 .csrf(csrf -> csrf.disable())
 
