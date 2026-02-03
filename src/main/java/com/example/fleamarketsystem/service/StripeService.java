@@ -1,16 +1,19 @@
 package com.example.fleamarketsystem.service;
 
+import java.math.BigDecimal;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 public class StripeService {
+	
+	//4242 4242 4242 4242
 
     public StripeService(@Value("${stripe.api.secretKey}") String secretKey) {
         Stripe.apiKey = secretKey;
