@@ -57,34 +57,20 @@ public class SecurityConfig {
                                 "/oauth2/**")
 						.permitAll()
 						
-						/*
-						.requestMatchers("/api/v1/**").permitAll()
-						*/
-						
-						/* API v1 テスト用JWT無視 */
-						
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/api/v1/items/**").permitAll()
-						.requestMatchers("/api/v1/auth/**").permitAll()
-						.requestMatchers("/api/v1/admin/users/**").permitAll()
 						.requestMatchers("/api/v1/dashboard/**").permitAll()
 						.requestMatchers("/api/v1/home").permitAll()
 						.requestMatchers("/api/v1/my-page/**").permitAll()
 						
 						.requestMatchers("/api/v1/orders/**").authenticated()
 						
+						.requestMatchers("/api/v1/admin/").hasRole("ADMIN")
+						.requestMatchers("/api/v1/auth/**").hasRole("ADMIN")
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 						.requestMatchers("/api/v1/**").authenticated()
 						
 						)
-				// Basic 認証を Lambda で全体に適用
-		        .httpBasic(httpBasic -> httpBasic
-		            .authenticationEntryPoint((request, response, authException) -> {
-		                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		                response.setContentType("application/json");
-		                response.getWriter().write("{\"error\":\"unauthorized\"}");
-		            })
-		        )
 						
 		        .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
