@@ -128,7 +128,7 @@ GET /api/stars/user/{userId}
 
 ##### ユーザーの評価統計を取得
 ```
-GET /api/stars/user/{userId}/stats
+GET /api/stars/{targetUserId}/stats
 
 Response:
 {
@@ -139,21 +139,50 @@ Response:
 
 ##### 評価を更新
 ```
-PUT /api/stars/{starId}
+PUT /api/v1/stars/{starId}
 Authorization: Bearer {token}
 Content-Type: application/json
 
 {
+  "targetUserId": 2,
   "rating": 4,
   "comment": "Updated comment"
+}
+
+Response:
+{
+  "id": 1,
+  "userId": 1,
+  "userName": "Buyer",
+  "targetUserId": 2,
+  "targetUserName": "Seller",
+  "rating": 4,
+  "comment": "Updated comment",
+  "createdAt": "2026-01-23T10:00:00"
 }
 ```
 
 ##### 評価を削除
 ```
-DELETE /api/stars/{starId}
+DELETE /api/v1/stars/{starId}
 Authorization: Bearer {token}
+
+Response:
+{
+  "message": "Star deleted successfully"
+}
 ```
+
+##### ランク自動更新機能
+評価の平均スコアに基づいて、対象ユーザーのrankが自動的に更新されます。
+
+ランク基準:
+- **bronze**: 平均評価 0.0 ～ 2.0
+- **silver**: 平均評価 2.1 ～ 3.5
+- **gold**: 平均評価 3.6 ～ 4.5
+- **platinum**: 平均評価 4.6 ～ 5.0
+
+評価の作成、更新、削除時に自動的にランクが再計算されます。
 
 ### 4. Report（通報）機能
 

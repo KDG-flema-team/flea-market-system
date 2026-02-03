@@ -18,7 +18,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.repository.UserRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class UserService {
 	private final UserRepository repo;
 	private final PasswordEncoder passwordEncoder;
@@ -74,9 +77,12 @@ public class UserService {
 		String email = jwt.getClaimAsString("email");
 		String name = jwt.getClaimAsString("name");
 
+		log.info("Auth0認証: auth0Id={}, email={}, name={}", auth0Id, email, name);
+
 		// Auth0 IDでユーザーを検索
 		Optional<User> existingUser = repo.findByAuth0Id(auth0Id);
 		if (existingUser.isPresent()) {
+			log.info("既存のAuth0ユーザーが見つかりました: userId={}", existingUser.get().getId());
 			return existingUser.get();
 		}
 
@@ -86,10 +92,12 @@ public class UserService {
 			User user = existingByEmail.get();
 			// 既存ユーザーにAuth0 IDを設定
 			user.setAuth0Id(auth0Id);
+			log.info("既存ユーザーにAuth0 IDを設定: userId={}, auth0Id={}", user.getId(), auth0Id);
 			return repo.save(user);
 		}
 
 		// 新規ユーザーを作成
+		log.info("新規Auth0ユーザーを作成: auth0Id={}, email={}", auth0Id, email);
 		User newUser = new User();
 		newUser.setAuth0Id(auth0Id);
 		newUser.setEmail(email != null ? email : (auth0Id != null ? auth0Id + "@auth0.local" : "unknown@auth0.local"));
@@ -103,7 +111,7 @@ public class UserService {
 		}
 		newUser.setName(displayName);
 		newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // ランダムパスワード
-		newUser.setRole("USER");
+		newUser.setRole("user");
 		newUser.setRank("bronze");
 		newUser.setEnabled(true);
 		newUser.setBanned(false);
