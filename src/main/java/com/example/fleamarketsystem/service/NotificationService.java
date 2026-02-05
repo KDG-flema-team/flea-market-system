@@ -97,13 +97,18 @@ public class NotificationService {
 
     @Transactional
     public void markAsRead(Long noticeId, Long userId) {
+        // Info（ID >= INFO_ID_OFFSET）は常に既読なので、何もしない
+        if (noticeId >= NotificationResponse.INFO_ID_OFFSET) {
+            return; // Infoは既読マーク不要
+        }
+
         Notice notice = noticeRepository.findById(noticeId)
             .orElseThrow(() -> new RuntimeException("Notice not found"));
-        
+
         if (!notice.getUser().getId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
-        
+
         notice.setIsRead(true);
         noticeRepository.save(notice);
     }
@@ -130,7 +135,17 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public NotificationResponse getNotificationById(Long notificationId, Long userId) {
-        // Try to find as Notice first
+        // IDが INFO_ID_OFFSET 以上の場合は Info として扱う
+        if (notificationId >= NotificationResponse.INFO_ID_OFFSET) {
+            Long actualInfoId = notificationId - NotificationResponse.INFO_ID_OFFSET;
+            var info = infoRepository.findById(actualInfoId);
+            if (info.isPresent()) {
+                return NotificationResponse.fromInfo(info.get());
+            }
+            throw new RuntimeException("Notification not found");
+        }
+
+        // それ以外は Notice として扱う
         var notice = noticeRepository.findById(notificationId);
         if (notice.isPresent()) {
             Notice n = notice.get();
@@ -140,13 +155,7 @@ public class NotificationService {
             }
             return NotificationResponse.fromNotice(n);
         }
-        
-        // Try to find as Info
-        var info = infoRepository.findById(notificationId);
-        if (info.isPresent()) {
-            return NotificationResponse.fromInfo(info.get());
-        }
-        
+
         throw new RuntimeException("Notification not found");
     }
 }

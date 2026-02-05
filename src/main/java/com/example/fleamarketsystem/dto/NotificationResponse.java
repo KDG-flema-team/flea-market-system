@@ -20,7 +20,10 @@ public record NotificationResponse(
     String type,
     String relatedItemId
 ) {
-    private static final DateTimeFormatter DATE_FORMATTER = 
+    // InfoとNoticeのIDスペースを分離するためのオフセット
+    public static final long INFO_ID_OFFSET = 1_000_000L;
+
+    private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm");
     
     public static NotificationResponse fromNotice(Notice notice) {
@@ -51,12 +54,12 @@ public record NotificationResponse(
         String title = info.getTitle() != null ? info.getTitle() : "お知らせ";
         String body = info.getContent() != null ? info.getContent() : "";
         String message = body.isEmpty() ? title : body;
-        String formattedDate = info.getCreateAt() != null 
-            ? info.getCreateAt().format(DATE_FORMATTER) 
+        String formattedDate = info.getCreateAt() != null
+            ? info.getCreateAt().format(DATE_FORMATTER)
             : "";
-        
+
         return new NotificationResponse(
-            info.getId(),
+            info.getId() + INFO_ID_OFFSET, // InfoのIDにオフセットを加算してNoticeとの衝突を回避
             message,
             info.getCreateAt(),
             true, // Info is always considered read

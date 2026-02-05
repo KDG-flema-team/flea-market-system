@@ -128,3 +128,13 @@ INSERT INTO notice (title, content, created_at, user_id, is_read) VALUES
 ('キャンペーン情報', '【本日限定】全品送料無料キャンペーン実施中！急いでチェック！', NOW() - INTERVAL '14 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
 ('クーポン有効期限', '1,000円クーポンの有効期限が残り3日です。お早めにご利用ください。', NOW() - INTERVAL '16 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
 ('アカウント情報更新', 'プロフィール画像が更新されました。', NOW() - INTERVAL '18 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE);
+
+
+-- info 
+
+INSERT INTO info (title,content,image_url,is_important,create_at) VALUES
+('メンテナンスのお知らせ','システムメンテナンスを2月1日午前2時から4時まで実施します。','/images/maintenance.png',TRUE,NOW() - INTERVAL '10 days'),
+('新機能追加','新しいチャット機能が追加されました。出品者と直接やり取りが可能です。','/images/chat_feature.png',FALSE,NOW() - INTERVAL '5 days'),
+('キャンペーン情報','期間限定で出品手数料が50%オフ！この機会にぜひご利用ください。','/images/campaign.png',FALSE,NOW() - INTERVAL '2 days'),
+('安全な取引のために','不審なユーザーを見かけたらすぐに通報してください。皆様の安全を守るための重要なお知らせです。','/images/safety.png',TRUE,NOW() - INTERVAL '1 days')
+;
