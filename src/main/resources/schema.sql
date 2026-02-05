@@ -27,7 +27,9 @@ CREATE TABLE users (
   banned BOOLEAN NOT NULL DEFAULT FALSE,
   ban_reason TEXT,
   banned_at TIMESTAMP,
-  banned_by_admin_id INT
+  banned_by_admin_id INT,
+  
+  description VARCHAR(1000)
 );
 
 CREATE TABLE category (

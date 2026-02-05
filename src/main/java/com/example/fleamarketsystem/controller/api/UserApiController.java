@@ -1,20 +1,24 @@
 package com.example.fleamarketsystem.controller.api;
 
-import com.example.fleamarketsystem.service.UserService;
-
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.entity.User;
+import com.example.fleamarketsystem.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 
 @RestController
@@ -64,6 +68,7 @@ public class UserApiController {
             response.put("rank", loginUser.getRank());
             response.put("enabled", loginUser.isEnabled());
             response.put("banned", loginUser.isBanned());
+            response.put("description", loginUser.getDescription());
             // JWT情報も含める場合
             response.put("auth0Id", jwt.getSubject());
             response.put("issuer", jwt.getIssuer());
@@ -73,6 +78,51 @@ public class UserApiController {
             return createErrorResponse("Failed to get user profile", e.getMessage());
         }
 
+    }
+    
+    @PutMapping("/my-page")
+    public ResponseEntity<?> updateMyProfile(
+    		
+    		@AuthenticationPrincipal Jwt jwt,
+    		@LoginUser User loginUser,
+    		@RequestBody Map<String, Object> body
+    		
+    		) {
+    	
+    	try {
+            if (jwt == null) {
+                return createErrorResponse("ユーザーが認証されていません", 401);
+            }
+
+            if (loginUser == null) {
+                return createErrorResponse("ユーザーが見つかりません", 404);
+            }
+
+            String name = (String) body.get("name");
+            String description = (String) body.get("description");
+
+            if (name != null && !name.isBlank()) {
+                loginUser.setName(name);
+            }
+
+            if (description != null) {
+                loginUser.setDescription(description);
+            }
+
+            userService.saveUser(loginUser); // 🔽 保存処理
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", loginUser.getId());
+            response.put("name", loginUser.getName());
+            response.put("description", loginUser.getDescription());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return createErrorResponse("プロフィールの更新に失敗しました", e.getMessage());
+        }
+
+    	
     }
 
     /**
@@ -113,6 +163,7 @@ public class UserApiController {
         response.put("rank", user.getRank());
         response.put("enabled", user.isEnabled());
         response.put("banned", user.isBanned());
+        response.put("description", user.getDescription());
         // JWT情報も含める場合
         response.put("auth0Id", jwt.getSubject());
         response.put("issuer", jwt.getIssuer());

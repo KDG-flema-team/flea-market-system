@@ -5,11 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
-
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -65,12 +63,12 @@ public class SecurityConfig {
                                                 /* API v1 テスト用JWT無視 */
                                                 .requestMatchers("/error").permitAll()
                                                 .requestMatchers("/api/v1/items/**").permitAll()
-                                                .requestMatchers("/api/v1/auth/**").permitAll()
                                                 .requestMatchers("/api/v1/admin/users/**").permitAll()
-                                                .requestMatchers("/api/v1/dashboard/**").permitAll()
-                                                .requestMatchers("/api/v1/home").permitAll()
-                                                .requestMatchers("/api/v1/my-page/**").permitAll()
-
+                                                
+                                                .requestMatchers("/api/v1/dashboard/**").authenticated()
+                                                .requestMatchers("/api/v1/home").authenticated()
+                                                .requestMatchers("/api/v1/my-page/**").authenticated()
+                                                .requestMatchers("/api/v1/auth/**").authenticated()
                                                 .requestMatchers("/api/v1/orders/**").authenticated()
 
                                                 // Auth0 permissions ベースの認可
