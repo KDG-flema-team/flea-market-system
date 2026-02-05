@@ -97,6 +97,24 @@ public class UserService {
 		}
 
 		// 新規ユーザーを作成
+		try {
+			return createNewAuth0User(auth0Id, email, name);
+		} catch (org.springframework.dao.DataIntegrityViolationException e) {
+			// レースコンディション: 別のリクエストが既にユーザーを作成した
+			log.warn("ユーザー作成の競合を検出。既存ユーザーを再取得します: auth0Id={}", auth0Id);
+			// 新しいトランザクションで既存ユーザーを取得
+			return findUserByAuth0IdInNewTransaction(auth0Id);
+		}
+	}
+
+	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+	protected User findUserByAuth0IdInNewTransaction(String auth0Id) {
+		return repo.findByAuth0Id(auth0Id)
+			.orElseThrow(() -> new IllegalStateException("ユーザー作成に失敗し、再取得もできませんでした: " + auth0Id));
+	}
+
+	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+	protected User createNewAuth0User(String auth0Id, String email, String name) {
 		log.info("新規Auth0ユーザーを作成: auth0Id={}, email={}", auth0Id, email);
 		User newUser = new User();
 		newUser.setAuth0Id(auth0Id);

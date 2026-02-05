@@ -73,7 +73,8 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/api/v1/orders/**").authenticated()
 
-                                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                                // Auth0 permissions ベースの認可
+                                                .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_read:admin_control")
                                                 .requestMatchers("/api/v1/**").authenticated())
                                 // Basic 認証を Lambda で全体に適用
                                 .httpBasic(httpBasic -> httpBasic
@@ -144,7 +145,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/items/**").permitAll()
                                                 .requestMatchers("/api/v1/admin/users/**").permitAll()
                                                 .requestMatchers("/api/v1/orders/**").authenticated()
-                                                .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                                                // Auth0 permissions ベースの認可
+                                                .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_read:admin_control")
                                                 .requestMatchers("/api/v1/**").authenticated())
                                 .oauth2ResourceServer(oauth2 -> oauth2
                                                 .jwt(jwt -> jwt.jwtAuthenticationConverter(
