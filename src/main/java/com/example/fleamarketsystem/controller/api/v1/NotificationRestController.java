@@ -14,9 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.fleamarketsystem.dto.NotificationResponse;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -79,6 +82,12 @@ public class NotificationRestController {
           }
           throw e;
       }
+  }
+
+  @PostMapping("/read-all")
+  public ResponseEntity<Map<String, Integer>> markAllAsRead(@LoginUser User user) {
+      int updatedCount = notificationService.markAllAsRead(user.getId());
+      return ResponseEntity.ok(Map.of("updatedCount", updatedCount));
   }
   
 }

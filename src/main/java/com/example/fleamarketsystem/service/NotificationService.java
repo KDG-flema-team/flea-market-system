@@ -108,6 +108,18 @@ public class NotificationService {
         noticeRepository.save(notice);
     }
 
+    @Transactional
+    public int markAllAsRead(Long userId) {
+        List<Notice> unreadNotices = noticeRepository.findByUser_IdAndIsRead(userId, false);
+        
+        for (Notice notice : unreadNotices) {
+            notice.setIsRead(true);
+        }
+        
+        noticeRepository.saveAll(unreadNotices);
+        return unreadNotices.size();
+    }
+
     @Transactional(readOnly = true)
     public int getUnreadCount(Long userId) {
         List<Notice> notices = noticeRepository.findByUser_Id(userId);
