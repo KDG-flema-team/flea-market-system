@@ -64,6 +64,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/error").permitAll()
                                                 .requestMatchers("/api/v1/items/**").permitAll()
                                                 .requestMatchers("/api/v1/admin/users/**").permitAll()
+                                                .requestMatchers("/api/v1/admin/items/**").permitAll()
+                                                .requestMatchers("/api/v1/admin/statistics/**").permitAll()
                                                 
                                                 .requestMatchers("/api/v1/dashboard/**").authenticated()
                                                 .requestMatchers("/api/v1/home").authenticated()
@@ -142,6 +144,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/error").permitAll()
                                                 .requestMatchers("/api/v1/items/**").permitAll()
                                                 .requestMatchers("/api/v1/admin/users/**").permitAll()
+                                                .requestMatchers("/api/v1/admin/items/**").permitAll()
+                                                .requestMatchers("/api/v1/admin/statistics/**").permitAll()
                                                 .requestMatchers("/api/v1/orders/**").authenticated()
                                                 // Auth0 permissions ベースの認可
                                                 .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_read:admin_control")

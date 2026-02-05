@@ -26,10 +26,12 @@ import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.dto.AdminStatisticsResponse;
 import com.example.fleamarketsystem.dto.InfoRequest;
 import com.example.fleamarketsystem.dto.InfoResponse;
+import com.example.fleamarketsystem.dto.ItemResponse;
 import com.example.fleamarketsystem.entity.Info;
 import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.service.AppOrderService;
 import com.example.fleamarketsystem.service.InfoService;
+import com.example.fleamarketsystem.service.ItemService;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -38,10 +40,12 @@ public class AdminRestController {
 
     private final AppOrderService appOrderService;
     private final InfoService infoService;
+    private final ItemService itemService;
 
-    public AdminRestController(AppOrderService appOrderService, InfoService infoService) {
+    public AdminRestController(AppOrderService appOrderService, InfoService infoService, ItemService itemService) {
         this.appOrderService = appOrderService;
         this.infoService = infoService;
+        this.itemService = itemService;
     }
 
     /*
@@ -51,11 +55,7 @@ public class AdminRestController {
      */
     @GetMapping("/statistics")
     public AdminStatisticsResponse getStatistics(
-
-            @LoginUser User AdminUser,
-
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (startDate == null) {
             startDate = LocalDate.now().minusMonths(1);
@@ -78,13 +78,8 @@ public class AdminRestController {
      */
     @GetMapping(value = "/statistics/csv", produces = "text/csv")
     public void exportStatisticsCsv(
-
-            @LoginUser User AdminUser,
-
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-
             HttpServletResponse response) throws Exception {
 
         if (startDate == null) {
@@ -114,7 +109,7 @@ public class AdminRestController {
      * Get all info entries
      */
     @GetMapping("/info")
-    public ResponseEntity<List<InfoResponse>> getAllInfo(@LoginUser User adminUser) {
+    public ResponseEntity<List<InfoResponse>> getAllInfo() {
         List<InfoResponse> infoList = infoService.getAllInfo().stream()
                 .map(InfoResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -125,9 +120,7 @@ public class AdminRestController {
      * Get info by ID
      */
     @GetMapping("/info/{id}")
-    public ResponseEntity<InfoResponse> getInfoById(
-            @LoginUser User adminUser,
-            @PathVariable Long id) {
+    public ResponseEntity<InfoResponse> getInfoById(@PathVariable Long id) {
         return infoService.getInfoById(id)
                 .map(InfoResponse::fromEntity)
                 .map(ResponseEntity::ok)
@@ -138,9 +131,7 @@ public class AdminRestController {
      * Create new info entry
      */
     @PostMapping("/info")
-    public ResponseEntity<InfoResponse> createInfo(
-            @LoginUser User adminUser,
-            @Valid @RequestBody InfoRequest request) {
+    public ResponseEntity<InfoResponse> createInfo(@Valid @RequestBody InfoRequest request) {
         Info info = new Info();
         info.setTitle(request.title());
         info.setContent(request.content());
@@ -157,7 +148,6 @@ public class AdminRestController {
      */
     @PutMapping("/info/{id}")
     public ResponseEntity<InfoResponse> updateInfo(
-            @LoginUser User adminUser,
             @PathVariable Long id,
             @Valid @RequestBody InfoRequest request) {
         try {
@@ -178,11 +168,41 @@ public class AdminRestController {
      * Delete info entry
      */
     @DeleteMapping("/info/{id}")
-    public ResponseEntity<Void> deleteInfo(
-            @LoginUser User adminUser,
-            @PathVariable Long id) {
+    public ResponseEntity<Void> deleteInfo(@PathVariable Long id) {
         try {
             infoService.deleteInfo(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /*
+     * =========================
+     * Item管理
+     * =========================
+     */
+
+    /**
+     * Get all items (Admin)
+     * GET /admin/items
+     */
+    @GetMapping("/items")
+    public ResponseEntity<List<ItemResponse>> getAllItems() {
+        List<ItemResponse> items = itemService.getAllItems().stream()
+                .map(ItemResponse::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(items);
+    }
+
+    /**
+     * Delete item (Admin)
+     * DELETE /admin/items/{id}
+     */
+    @DeleteMapping("/items/{id}")
+    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+        try {
+            itemService.deleteItem(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

@@ -21,8 +21,8 @@ import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.service.AdminUserService;
 
 @RestController
-@RequestMapping("api/v1/admin/users")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/v1/admin/users")
+@PreAuthorize("hasAuthority('ROLE_read:admin_control')")
 public class AdminUserRestController {
 
     private final AdminUserService service;
@@ -37,7 +37,6 @@ public class AdminUserRestController {
      */
     @GetMapping
     public List<AdminUserResponse> list(
-    		@LoginUser User adminUser,
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "sort", defaultValue = "id") String sort
     ) {
@@ -80,10 +79,7 @@ public class AdminUserRestController {
      * GET /admin/users/{id}
      */
     @GetMapping("/{id}")
-    public AdminUserResponse detail(
-    		@LoginUser User adminUser,
-    		@PathVariable Long id
-    ) {
+    public AdminUserResponse detail(@PathVariable Long id) {
         User user = service.findUser(id);
         
         return AdminUserResponse.fromEntity(user);
@@ -95,11 +91,11 @@ public class AdminUserRestController {
      */
     @PostMapping("/{id}/ban")
     public void updateBanStatus(
-    		@LoginUser User adminUser,
             @PathVariable Long id,
             @RequestBody BanRequest request
     ) {
-        Long adminId = adminUser.getId();
+        // TODO: 本番環境では認証されたadminUserからIDを取得
+        Long adminId = 1L; // 開発用の仮ID
 
         if (request.banned()) {
             service.banUser(
