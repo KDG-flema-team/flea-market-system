@@ -51,18 +51,29 @@ public class ItemService {
     public Item saveItem(Item item, MultipartFile imageFile) throws IOException {
         if (imageFile != null && !imageFile.isEmpty()) {
             String imageUrl = cloudinaryService.uploadFile(imageFile);
-            item.setImageUrl(imageUrl);
+            List<String> imageUrls = item.getImageUrls();
+            if (imageUrls == null) {
+                imageUrls = new java.util.ArrayList<>();
+            }
+            imageUrls.add(imageUrl);
+            item.setImageUrls(imageUrls);
         }
         return itemRepository.save(item);
     }
 
     public void deleteItem(Long id) {
         itemRepository.findById(id).ifPresent(item -> {
-            if (item.getImageUrl() != null) {
-                try {
-                    cloudinaryService.deleteFile(item.getImageUrl());
-                } catch (IOException e) {
-                    System.err.println("Failed to delete image from Cloudinary: " + e.getMessage());
+            List<String> imageUrls = item.getImageUrls();
+            if (imageUrls != null && !imageUrls.isEmpty()) {
+                for (String imageUrl : imageUrls) {
+                    if (imageUrl == null || imageUrl.isBlank()) {
+                        continue;
+                    }
+                    try {
+                        cloudinaryService.deleteFile(imageUrl);
+                    } catch (IOException e) {
+                        System.err.println("Failed to delete image from Cloudinary: " + e.getMessage());
+                    }
                 }
             }
             itemRepository.deleteById(id);
