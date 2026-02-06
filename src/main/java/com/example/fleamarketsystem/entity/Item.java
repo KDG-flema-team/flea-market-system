@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime; // Add this import
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "item")
@@ -37,8 +39,11 @@ public class Item {
 
     private String status = "出品中"; // default status
 
-    // For image URLs (Cloudinary)
-    private String imageUrl;
+    // For image URLs (Cloudinary) - multiple images support
+    @ElementCollection
+    @CollectionTable(name = "item_images", joinColumns = @JoinColumn(name = "item_id"))
+    @Column(name = "image_url")
+    private List<String> imageUrls = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false) // New field
     private LocalDateTime createdAt = LocalDateTime.now();

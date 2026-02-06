@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS chat CASCADE;
 DROP TABLE IF EXISTS favorite_item CASCADE;
 DROP TABLE IF EXISTS review CASCADE;
 DROP TABLE IF EXISTS app_order CASCADE;
+DROP TABLE IF EXISTS item_images CASCADE;
 DROP TABLE IF EXISTS item CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
 DROP TABLE IF EXISTS user_complaint CASCADE;
@@ -53,10 +54,15 @@ CREATE TABLE item (
   price NUMERIC(10,2) NOT NULL,
   category_id INT,
   status VARCHAR(20) DEFAULT '出品中',
-  image_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (category_id) REFERENCES category(id)
+);
+
+CREATE TABLE item_images (
+  item_id INT NOT NULL,
+  image_url TEXT NOT NULL,
+  FOREIGN KEY (item_id) REFERENCES item(id) ON DELETE CASCADE
 );
 
 CREATE TABLE app_order (

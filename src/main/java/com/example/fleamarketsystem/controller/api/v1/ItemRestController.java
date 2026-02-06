@@ -92,6 +92,10 @@ public class ItemRestController {
         item.setPrice(request.price());
         item.setCategory(category);
 
+        if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
+            item.setImageUrls(request.imageUrls());
+        }
+
         return ItemResponse.from(itemService.save(item));
     }
     
@@ -117,6 +121,10 @@ public class ItemRestController {
         item.setDescription(request.description());
         item.setPrice(request.price());
         item.setCategory(category);
+
+        if (request.imageUrls() != null && !request.imageUrls().isEmpty()) {
+            item.setImageUrls(request.imageUrls());
+        }
 
         return ItemResponse.from(itemService.save(item));
     }
