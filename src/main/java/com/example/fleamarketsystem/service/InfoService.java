@@ -37,7 +37,7 @@ public class InfoService {
      */
     @Transactional(readOnly = true)
     public List<Info> getImportantInfo() {
-        return infoRepository.findByisImportantTrue();
+        return infoRepository.findByIsImportantTrue();
     }
 
     /**
@@ -61,7 +61,7 @@ public class InfoService {
     public Info updateInfo(Long id, Info updatedInfo) {
         Info info = infoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Info not found with id: " + id));
-        
+
         if (updatedInfo.getTitle() != null) {
             info.setTitle(updatedInfo.getTitle());
         }
@@ -74,7 +74,7 @@ public class InfoService {
         if (updatedInfo.getIsImportant() != null) {
             info.setIsImportant(updatedInfo.getIsImportant());
         }
-        
+
         return infoRepository.save(info);
     }
 

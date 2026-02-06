@@ -17,8 +17,13 @@ public class CorsConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(
-                                Arrays.asList("http://localhost:3000", "http://localhost:8080",
-                                                "http://localhost:5173"));
+                                Arrays.asList(
+                                                "http://localhost",        // Docker Nginx (port 80)
+                                                "http://localhost:80",     // Docker Nginx (explicit port)
+                                                "http://localhost:3000",   // React dev server
+                                                "http://localhost:5173",   // Vite dev server
+                                                "http://localhost:8080"    // Backend (for testing)
+                                ));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
                 configuration.setAllowedHeaders(Arrays.asList("*"));

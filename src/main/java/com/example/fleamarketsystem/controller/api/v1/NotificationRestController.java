@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.fleamarketsystem.dto.NotificationResponse;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -26,68 +27,76 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationRestController {
 
-  private final NotificationService notificationService;
+    private final NotificationService notificationService;
 
-  @GetMapping
-  public ResponseEntity<NotificationListResponse> getNotifications(
-      @LoginUser User user,
-      @RequestParam(required = false) Long startId,
-      @RequestParam(required = false, defaultValue = "20") Integer limit,
-      @RequestParam(required = false, defaultValue = "false") Boolean onlyUnread
-  ) {
-      NotificationListResponse response = notificationService.getNotifications(
-          user.getId(),
-          startId,
-          limit,
-          onlyUnread
-      );
-      
-      return ResponseEntity.ok(response);
-  }
+    @GetMapping
+    public ResponseEntity<NotificationListResponse> getNotifications(
+            @LoginUser User user,
+            @RequestParam(required = false) Long startId,
+            @RequestParam(required = false, defaultValue = "20") Integer limit,
+            @RequestParam(required = false, defaultValue = "false") Boolean onlyUnread) {
+        if (user == null) {
+            return ResponseEntity.ok(new NotificationListResponse(new ArrayList<>(), null, false, 0));
+        }
+        NotificationListResponse response = notificationService.getNotifications(
+                user.getId(),
+                startId,
+                limit,
+                onlyUnread);
 
-  @GetMapping("/{id}")
-  public ResponseEntity<NotificationResponse> getNotificationById(
-      @LoginUser User user,
-      @PathVariable Long id
-  ) {
-      try {
-          NotificationResponse response = notificationService.getNotificationById(id, user.getId());
-          return ResponseEntity.ok(response);
-      } catch (RuntimeException e) {
-          if (e.getMessage().equals("Notification not found")) {
-              return ResponseEntity.notFound().build();
-          }
-          if (e.getMessage().equals("Unauthorized")) {
-              return ResponseEntity.status(403).build();
-          }
-          throw e;
-      }
-  }
+        return ResponseEntity.ok(response);
+    }
 
-  @PatchMapping("/{id}/read")
-  public ResponseEntity<NotificationResponse> markAsRead(
-      @LoginUser User user,
-      @PathVariable Long id
-  ) {
-      try {
-          notificationService.markAsRead(id, user.getId());
-          NotificationResponse response = notificationService.getNotificationById(id, user.getId());
-          return ResponseEntity.ok(response);
-      } catch (RuntimeException e) {
-          if (e.getMessage().equals("Notification not found") || e.getMessage().equals("Notice not found")) {
-              return ResponseEntity.notFound().build();
-          }
-          if (e.getMessage().equals("Unauthorized")) {
-              return ResponseEntity.status(403).build();
-          }
-          throw e;
-      }
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<NotificationResponse> getNotificationById(
+            @LoginUser User user,
+            @PathVariable Long id) {
+        try {
+            if (user == null) {
+                return ResponseEntity.status(401).build();
+            }
+            NotificationResponse response = notificationService.getNotificationById(id, user.getId());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Notification not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            if (e.getMessage().equals("Unauthorized")) {
+                return ResponseEntity.status(403).build();
+            }
+            throw e;
+        }
+    }
 
-  @PostMapping("/read-all")
-  public ResponseEntity<Map<String, Integer>> markAllAsRead(@LoginUser User user) {
-      int updatedCount = notificationService.markAllAsRead(user.getId());
-      return ResponseEntity.ok(Map.of("updatedCount", updatedCount));
-  }
-  
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<NotificationResponse> markAsRead(
+            @LoginUser User user,
+            @PathVariable Long id) {
+        try {
+            if (user == null) {
+                return ResponseEntity.status(401).build();
+            }
+            notificationService.markAsRead(id, user.getId());
+            NotificationResponse response = notificationService.getNotificationById(id, user.getId());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Notification not found") || e.getMessage().equals("Notice not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            if (e.getMessage().equals("Unauthorized")) {
+                return ResponseEntity.status(403).build();
+            }
+            throw e;
+        }
+    }
+
+    @PostMapping("/read-all")
+    public ResponseEntity<Map<String, Integer>> markAllAsRead(@LoginUser User user) {
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        int updatedCount = notificationService.markAllAsRead(user.getId());
+        return ResponseEntity.ok(Map.of("updatedCount", updatedCount));
+    }
+
 }

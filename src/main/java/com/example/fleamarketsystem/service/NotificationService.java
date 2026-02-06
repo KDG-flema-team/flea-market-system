@@ -36,18 +36,18 @@ public class NotificationService {
 
         // Get user-specific notices
         List<Notice> notices = noticeRepository.findByUser_Id(userId);
-        
+
         // Get important info for all users
-        List<Info> importantInfos = infoRepository.findByisImportantTrue();
+        List<Info> importantInfos = infoRepository.findByIsImportantTrue();
 
         // Combine and convert to NotificationResponse
         List<NotificationResponse> allNotifications = new ArrayList<>();
-        
+
         // Add notices
         for (Notice notice : notices) {
             allNotifications.add(NotificationResponse.fromNotice(notice));
         }
-        
+
         // Add important info
         for (Info info : importantInfos) {
             allNotifications.add(NotificationResponse.fromInfo(info));
@@ -59,27 +59,27 @@ public class NotificationService {
         // Filter by startId if provided
         if (startId != null) {
             allNotifications = allNotifications.stream()
-                .filter(n -> n.id() < startId)
-                .collect(Collectors.toList());
+                    .filter(n -> n.id() < startId)
+                    .collect(Collectors.toList());
         }
 
         // Filter by read status if onlyUnread is true
         if (onlyUnread != null && onlyUnread) {
             allNotifications = allNotifications.stream()
-                .filter(n -> !n.isRead())
-                .collect(Collectors.toList());
+                    .filter(n -> !n.isRead())
+                    .collect(Collectors.toList());
         }
 
         // Calculate unread count
         int unreadCount = (int) notices.stream()
-            .filter(n -> !n.getIsRead())
-            .count();
+                .filter(n -> !n.getIsRead())
+                .count();
 
         // Paginate
         boolean hasMore = allNotifications.size() > limit;
         List<NotificationResponse> paginatedNotifications = allNotifications.stream()
-            .limit(limit)
-            .collect(Collectors.toList());
+                .limit(limit)
+                .collect(Collectors.toList());
 
         // Determine nextStartId
         Long nextStartId = null;
@@ -88,11 +88,10 @@ public class NotificationService {
         }
 
         return new NotificationListResponse(
-            paginatedNotifications,
-            nextStartId,
-            hasMore,
-            unreadCount
-        );
+                paginatedNotifications,
+                nextStartId,
+                hasMore,
+                unreadCount);
     }
 
     @Transactional
@@ -103,7 +102,7 @@ public class NotificationService {
         }
 
         Notice notice = noticeRepository.findById(noticeId)
-            .orElseThrow(() -> new RuntimeException("Notice not found"));
+                .orElseThrow(() -> new RuntimeException("Notice not found"));
 
         if (!notice.getUser().getId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
@@ -116,11 +115,11 @@ public class NotificationService {
     @Transactional
     public int markAllAsRead(Long userId) {
         List<Notice> unreadNotices = noticeRepository.findByUser_IdAndIsRead(userId, false);
-        
+
         for (Notice notice : unreadNotices) {
             notice.setIsRead(true);
         }
-        
+
         noticeRepository.saveAll(unreadNotices);
         return unreadNotices.size();
     }
@@ -129,8 +128,8 @@ public class NotificationService {
     public int getUnreadCount(Long userId) {
         List<Notice> notices = noticeRepository.findByUser_Id(userId);
         return (int) notices.stream()
-            .filter(n -> !n.getIsRead())
-            .count();
+                .filter(n -> !n.getIsRead())
+                .count();
     }
 
     @Transactional(readOnly = true)

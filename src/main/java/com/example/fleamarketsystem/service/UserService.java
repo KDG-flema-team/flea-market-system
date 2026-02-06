@@ -71,7 +71,6 @@ public class UserService {
 		repo.save(u);
 	}
 
-	@Transactional
 	public User getOrCreateUserFromAuth0(Jwt jwt) {
 		String auth0Id = jwt.getSubject();
 		String email = jwt.getClaimAsString("email");
@@ -93,24 +92,29 @@ public class UserService {
 			// 既存ユーザーにAuth0 IDを設定
 			user.setAuth0Id(auth0Id);
 			log.info("既存ユーザーにAuth0 IDを設定: userId={}, auth0Id={}", user.getId(), auth0Id);
-			return repo.save(user);
+			updateUserInNewTransaction(user); // 新しいトランザクションで確実に保存
+			return user;
 		}
 
 		// 新規ユーザーを作成
 		try {
 			return createNewAuth0User(auth0Id, email, name);
-		} catch (org.springframework.dao.DataIntegrityViolationException e) {
-			// レースコンディション: 別のリクエストが既にユーザーを作成した
-			log.warn("ユーザー作成の競合を検出。既存ユーザーを再取得します: auth0Id={}", auth0Id);
-			// 新しいトランザクションで既存ユーザーを取得
+		} catch (Exception e) {
+			log.warn("ユーザー作成中にエラーまたは競合を検出。既存ユーザーを再取得します: auth0Id={}, error={}", auth0Id, e.getMessage());
+			// 新しいトランザクションで既存ユーザーを取得（既に別のスレッドで作成されている可能性があるため）
 			return findUserByAuth0IdInNewTransaction(auth0Id);
 		}
 	}
 
 	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+	protected void updateUserInNewTransaction(User user) {
+		repo.saveAndFlush(user);
+	}
+
+	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
 	protected User findUserByAuth0IdInNewTransaction(String auth0Id) {
 		return repo.findByAuth0Id(auth0Id)
-			.orElseThrow(() -> new IllegalStateException("ユーザー作成に失敗し、再取得もできませんでした: " + auth0Id));
+				.orElseThrow(() -> new IllegalStateException("ユーザー作成に失敗し、再取得もできませんでした: " + auth0Id));
 	}
 
 	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
@@ -165,9 +169,11 @@ public class UserService {
 
 	private Map<String, Object> parseJwtClaims(String jwtToken) {
 		try {
-			if (jwtToken == null) return Map.of();
+			if (jwtToken == null)
+				return Map.of();
 			String[] parts = jwtToken.split("\\.");
-			if (parts.length < 2) return Map.of();
+			if (parts.length < 2)
+				return Map.of();
 			String payload = parts[1];
 			// Base64 URL decode
 			Base64.Decoder decoder = Base64.getUrlDecoder();

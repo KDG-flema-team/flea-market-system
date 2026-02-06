@@ -1,6 +1,7 @@
 package com.example.fleamarketsystem.controller.api;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.fleamarketsystem.annotation.LoginUser;
+import com.example.fleamarketsystem.entity.AppOrder;
 import com.example.fleamarketsystem.entity.User;
+import com.example.fleamarketsystem.service.AppOrderService;
 import com.example.fleamarketsystem.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ public class UserApiController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final AppOrderService appOrderService;
 
     /**
      * 現在のユーザー情報を取得します
@@ -122,7 +126,31 @@ public class UserApiController {
             return createErrorResponse("プロフィールの更新に失敗しました", e.getMessage());
         }
 
-    	
+
+    }
+
+    /**
+     * ユーザーの購入履歴を取得します
+     */
+    @GetMapping("/my-page/orders")
+    public ResponseEntity<?> getMyOrders(@AuthenticationPrincipal Jwt jwt, @LoginUser User loginUser) {
+        try {
+            if (jwt == null) {
+                return createErrorResponse("ユーザーが認証されていません", 401);
+            }
+            if (loginUser == null) {
+                return createErrorResponse("ユーザーが見つかりません", 404);
+            }
+
+            List<AppOrder> orders = appOrderService.getOrdersByBuyer(loginUser);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("orders", orders);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return createErrorResponse("購入履歴の取得に失敗しました", e.getMessage());
+        }
     }
 
     /**

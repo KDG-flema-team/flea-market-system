@@ -77,15 +77,18 @@ public class AppOrderService {
         PaymentIntent paymentIntent = stripeService.retrievePaymentIntent(paymentIntentId);
 
         if ("succeeded".equals(paymentIntent.getStatus())) {
-            // Find the order associated with this payment intent (you might need to store paymentIntentId in AppOrder entity)
-            // For now, let's assume we find the latest pending order for simplicity
-            AppOrder appOrder = appOrderRepository.findAll().stream()
-                    .filter(o -> "決済待ち".equals(o.getStatus()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No pending order found for this payment."));
-            
+            // Find the order associated with this payment intent
+            AppOrder appOrder = appOrderRepository.findByPaymentIntentId(paymentIntentId)
+                    .orElseThrow(() -> new IllegalStateException("No order found for this payment intent: " + paymentIntentId));
+
+            // Verify the buyer
             if (!appOrder.getBuyer().getId().equals(buyer.getId())) {
             	throw new SecurityException("あなたの注文ではありません");
+            }
+
+            // Verify the order is still pending
+            if (!"決済待ち".equals(appOrder.getStatus())) {
+                throw new IllegalStateException("この注文は既に処理済みです。現在のステータス: " + appOrder.getStatus());
             }
 
             appOrder.setStatus("購入済");
