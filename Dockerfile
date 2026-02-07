@@ -1,14 +1,17 @@
+# syntax=docker/dockerfile:1
 # マルチステージビルド：ビルドステージ
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# 依存関係の解決を先に実行（キャッシュ活用）
+# 依存関係の解決を先に実行（BuildKitキャッシュマウント活用）
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn dependency:go-offline -B
 
 # ソースコードをコピーしてビルド
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests -B
 
 # 実行ステージ（ARM64/Apple Silicon対応）
 FROM eclipse-temurin:17-jre
