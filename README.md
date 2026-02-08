@@ -39,10 +39,6 @@ Java/Spring Boot 3.2を使用し、Auth0による堅牢な認証を特徴とし�
 3) 環境変数の設定
 
 ***application.propertiesにはStripe、Cloudinaryのシークレットキーが含まれているためGit管理の対象外となっています。そのため雛型のapplication.properties.exampleを使用しています。***
-
-```bash
-    touch src/main/resources/application.properties
-```
 4) application.properties.exampleをコピー＆ペースト
 ```bash
     cp src/main/resources/application.properties.example src/main/resources/application.properties
