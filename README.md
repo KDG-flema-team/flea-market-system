@@ -28,28 +28,29 @@ Java/Spring Boot 3.2を使用し、Auth0による堅牢な認証を特徴とし�
 
 ### 実行手順
 
-1. 任意のディレクトリでリポジトリをクローン
+- 任意のディレクトリでリポジトリをクローン
 
 ```bash
     git clone git@github.com:KDG-flema-team/flea-market-system.git
 ```
 
-2. プロジェクト直下に移動
+- プロジェクト直下に移動
 
 ```bash
     cd fleama-market-system
 ```
 
-3. 環境変数の設定
+- 環境変数の設定
 
 ***application.propertiesにはStripe、Cloudinaryのシークレットキーが含まれているためGit管理の対象外となっています。そのため雛型のapplication.properties.exampleを使用しています。***
-4. application.properties.exampleをコピー＆ペースト
+
+- application.properties.exampleをコピー＆ペースト
 
 ```bash
     cp src/main/resources/application.properties.example src/main/resources/application.properties
 ```
 
-5. 環境変数を設定
+- 環境変数を設定
 
 ```bash
     # PostgreSQLの例
@@ -72,7 +73,8 @@ Java/Spring Boot 3.2を使用し、Auth0による堅牢な認証を特徴とし�
     # その他Cloudinary, Stripeもアカウントを作成しそれぞれシークレットキーなどを設定
     
 ```
-6) 起動
+
+- 起動
 
 ```bash
     mvn spring-boot:run
@@ -88,7 +90,7 @@ Java/Spring Boot 3.2を使用し、Auth0による堅牢な認証を特徴とし�
 
 ### CORS設定
 ***現在、以下のオリジンを許可しています。フロントエンドの起動ポートが異なる場合は [CORS設定](src/main/java/com/example/fleamarketsystem/config/CorsConfig.java) を修正してください。***
-- 1 `http://localhost:3000`
+- `http://localhost:3000`
 
 ## 認証の流れ
 ***Auth0を前提とした実装になっています。フロントエンド側で取得した `id_token` (または `access_token`) を、`Authorization: Bearer {token}` として各リクエストに付与してください。***
