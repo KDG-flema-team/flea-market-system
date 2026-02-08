@@ -28,22 +28,29 @@ Java/Spring Boot 3.2を使用し、Auth0による堅牢な認証を特徴とし�
 
 ### 実行手順
 
-1) 任意のディレクトリでリポジトリをクローン
+1. 任意のディレクトリでリポジトリをクローン
+
 ```bash
     git clone git@github.com:KDG-flema-team/flea-market-system.git
 ```
-2) プロジェクト直下に移動
+
+2. プロジェクト直下に移動
+
 ```bash
     cd fleama-market-system
 ```
-3) 環境変数の設定
+
+3. 環境変数の設定
 
 ***application.propertiesにはStripe、Cloudinaryのシークレットキーが含まれているためGit管理の対象外となっています。そのため雛型のapplication.properties.exampleを使用しています。***
-4) application.properties.exampleをコピー＆ペースト
+4. application.properties.exampleをコピー＆ペースト
+
 ```bash
     cp src/main/resources/application.properties.example src/main/resources/application.properties
 ```
-5) 環境変数を設定
+
+5. 環境変数を設定
+
 ```bash
     # PostgreSQLの例
     psql -U postgres
@@ -66,6 +73,7 @@ Java/Spring Boot 3.2を使用し、Auth0による堅牢な認証を特徴とし�
     
 ```
 6) 起動
+
 ```bash
     mvn spring-boot:run
 ```
