@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,38 +16,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.fleamarketsystem.annotation.LoginUser;
 import com.example.fleamarketsystem.dto.StarRequest;
 import com.example.fleamarketsystem.dto.StarResponse;
 import com.example.fleamarketsystem.dto.StarStatsResponse;
 import com.example.fleamarketsystem.entity.Star;
-import com.example.fleamarketsystem.security.AuthUser;
-import com.example.fleamarketsystem.security.AuthUserResolver;
+import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.service.StarService;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/stars")
 public class StarRestController {
 
     private final StarService starService;
-    private final AuthUserResolver authUserResolver;
 
-    public StarRestController(StarService starService, AuthUserResolver authUserResolver) {
+    public StarRestController(StarService starService) {
         this.starService = starService;
-        this.authUserResolver = authUserResolver;
     }
 
     @PostMapping
     public ResponseEntity<?> createStar(
-            Authentication authentication,
+            @LoginUser User loginUser,
             @Valid @RequestBody StarRequest request
     ) {
-        AuthUser me = authUserResolver.resolve(authentication);
+        
 
         try {
             Star saved = starService.createStar(
-                    me.userId(),
+                    loginUser.getId(),
                     request.targetUserId(),
                     request.rating(),
                     request.comment()
@@ -76,16 +73,15 @@ public class StarRestController {
 
     @PutMapping("/{starId}")
     public ResponseEntity<?> updateStar(
-            Authentication authentication,
+    		@LoginUser User loginUser,
             @PathVariable Long starId,
             @Valid @RequestBody StarRequest request
     ) {
-        AuthUser me = authUserResolver.resolve(authentication);
 
         try {
             Star updated = starService.updateStar(
                     starId,
-                    me.userId(),
+                    loginUser.getId(),
                     request.rating(),
                     request.comment()
             );
@@ -97,13 +93,12 @@ public class StarRestController {
 
     @DeleteMapping("/{starId}")
     public ResponseEntity<?> deleteStar(
-            Authentication authentication,
+            @LoginUser User loginUser,
             @PathVariable Long starId
     ) {
-        AuthUser me = authUserResolver.resolve(authentication);
 
         try {
-            starService.deleteStar(starId, me.userId());
+            starService.deleteStar(starId, loginUser.getId());
             return ResponseEntity.ok(Map.of("message", "Star deleted successfully"));
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
