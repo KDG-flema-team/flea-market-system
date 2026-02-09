@@ -4,7 +4,6 @@ INSERT INTO users (auth0_id, name, email, password, role, rank, enabled, banned)
   ('auth0|697c2f13cedce9109f5bce8d', '出品者A', 'sellerA@example.com', 'VPGGVmnN!yC39EY', 'user', 'silver', TRUE, FALSE),
   ('auth0|697c32d79f91842cb6b36cc4',  '購入者B', 'xyz@example.com',     'VPGGVmnN!yC39EY', 'user',  'bronze', TRUE, FALSE),
   ('auth0|697c32e7ba50d6680a8f2d45',  '管理者C', 'adminC@example.com',   'VPGGVmnN!yC39EY', 'admin',  'gold',   TRUE, FALSE),
-  ('google-oauth2|117827171357457735743', 'ひろと', 'hirohirohiro112607@gmail.com', 'password', 'user', 'bronze', TRUE, FALSE);
 
 -- category
 INSERT INTO category (name) VALUES
@@ -93,42 +92,6 @@ INSERT INTO notice (title, content, created_at, user_id, is_read) VALUES
 ('月次レポート', '12月の取引件数：1,250件、総売上：3,500,000円', NOW() - INTERVAL '7 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
 ('システム更新完了', 'バージョン2.5.0へのアップデートが完了しました。', NOW() - INTERVAL '10 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
 ('管理者権限変更', '新しい管理者が追加されました。', NOW() - INTERVAL '15 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
-
--- テストユーザー（google-oauth2|117827171357457735743）への通知（30件：多様な通知タイプ）
--- 未読通知（9件）
-('ようこそ！', 'フリマアプリへようこそ！まずはプロフィールを設定しましょう。', NOW() - INTERVAL '5 minutes', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('商品が購入されました', 'おめでとうございます！「Nintendo Switch」が購入されました。', NOW() - INTERVAL '15 minutes', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('新しいメッセージ', '購入者から商品の配送について質問が届いています。', NOW() - INTERVAL '30 minutes', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('値下げ交渉', '「MacBook Pro」に8,000円の値下げ交渉リクエストが届いています。', NOW() - INTERVAL '1 hour', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('お気に入り登録', 'あなたの商品が5件お気に入りに追加されました！', NOW() - INTERVAL '2 hours', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('配送予定通知', '購入した「プログラミング学習セット」が本日到着予定です。', NOW() - INTERVAL '3 hours', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('レビュー依頼', '最近の取引についてレビューをお願いします。★を付けてください。', NOW() - INTERVAL '5 hours', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('セール開始', '【期間限定】家電カテゴリで最大40%オフセール開催中！', NOW() - INTERVAL '8 hours', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-('クーポン配布', '新規登録キャンペーン！1,000円分のクーポンをプレゼント！', NOW() - INTERVAL '10 hours', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), FALSE),
-
--- 既読通知（21件）
-('商品閲覧数増加', 'あなたの「iPhone 15 Pro」の閲覧数が150回を超えました！', NOW() - INTERVAL '12 hours', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('取引完了', '「デザインパターン入門」の取引が無事完了しました。', NOW() - INTERVAL '1 day', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('新しいフォロワー', '8人の新しいフォロワーがあなたをフォローしました。', NOW() - INTERVAL '1 day', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('商品発送完了', '「ワイヤレスマウス」が発送されました。配送状況を確認できます。', NOW() - INTERVAL '2 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('レビューが投稿されました', 'あなたの商品に新しいレビューが投稿されました。★★★★★ "とても良い商品でした！"', NOW() - INTERVAL '2 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('値下げ通知', 'お気に入りの「iPad Air」が5,000円値下げされました。', NOW() - INTERVAL '3 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('ポイント付与', 'レビュー投稿で200ポイント獲得しました！', NOW() - INTERVAL '3 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('おすすめ商品', 'あなたにおすすめの商品が12件あります。「家電」カテゴリをチェック！', NOW() - INTERVAL '4 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('新着商品', 'フォロー中の出品者が「AirPods Pro 第2世代」を出品しました。', NOW() - INTERVAL '4 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('購入ありがとうございます', '「Reactハンズオン」の決済が完了しました。発送をお待ちください。', NOW() - INTERVAL '5 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('取引評価完了', '取引相手があなたを評価しました。★★★★★ "迅速な対応ありがとうございました"', NOW() - INTERVAL '6 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('ウォッチリスト', 'ウォッチリストの「ゲーミングキーボード」が間もなく出品終了します。', NOW() - INTERVAL '7 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('システムメンテナンス', '【重要】2月1日午前2時〜4時にシステムメンテナンスを実施します。', NOW() - INTERVAL '8 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('売上金振込完了', '今月の売上金25,800円が振り込まれました。', NOW() - INTERVAL '9 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('お気に入り商品再出品', '欲しいものリストの「ミラーレスカメラ」が再出品されました。', NOW() - INTERVAL '10 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('購入履歴', '今月の購入金額が32,000円に達しました。あと8,000円でシルバーランクに！', NOW() - INTERVAL '11 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('新しいメッセージ', '出品者から「商品の梱包は丁寧に行います」とメッセージが届きました。', NOW() - INTERVAL '12 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('受取確認のお願い', '「TypeScript実践ガイド」が到着しましたら受取確認をお願いします。', NOW() - INTERVAL '13 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('キャンペーン情報', '【本日限定】全品送料無料キャンペーン実施中！急いでチェック！', NOW() - INTERVAL '14 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('クーポン有効期限', '1,000円クーポンの有効期限が残り3日です。お早めにご利用ください。', NOW() - INTERVAL '16 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE),
-('アカウント情報更新', 'プロフィール画像が更新されました。', NOW() - INTERVAL '18 days', (SELECT id FROM users WHERE auth0_id='google-oauth2|117827171357457735743'), TRUE);
-
 
 -- info 
 
