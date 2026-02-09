@@ -40,69 +40,7 @@ public class SecurityConfig {
                 this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
         }
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                http
-                                // CORS有効化
-                                .cors(cors -> {
-                                })
 
-                                // REST なので CSRF 無効
-                                .csrf(csrf -> csrf.disable())
-
-                                // セッションを使わない
-                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                                .authorizeHttpRequests(auth -> auth
-
-                                                .requestMatchers("/login", "/css/**", "/js/**", "/images/**",
-                                                                "/webjars/**", "/error",
-                                                                "/oauth2/**")
-                                                .permitAll()
-
-                                                /* API v1 テスト用JWT無視 */
-                                                .requestMatchers("/error").permitAll()
-                                                .requestMatchers("/api/v1/items/**").permitAll()
-                                                .requestMatchers("/api/v1/admin/users/**").permitAll()
-                                                .requestMatchers("/api/v1/admin/items/**").permitAll()
-                                                .requestMatchers("/api/v1/admin/statistics/**").permitAll()
-                                                
-                                                .requestMatchers("/api/v1/dashboard/**").authenticated()
-                                                .requestMatchers("/api/v1/home").authenticated()
-                                                .requestMatchers("/api/v1/my-page/**").authenticated()
-                                                .requestMatchers("/api/v1/auth/**").authenticated()
-                                                .requestMatchers("/api/v1/orders/**").authenticated()
-
-                                                // Auth0 permissions ベースの認可
-                                                .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_read:admin_control")
-                                                .requestMatchers("/api/v1/**").authenticated())
-                                // Basic 認証を Lambda で全体に適用
-                                .httpBasic(httpBasic -> httpBasic
-                                                .authenticationEntryPoint((request, response, authException) -> {
-                                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                                        response.setContentType("application/json");
-                                                        response.getWriter().write("{\"error\":\"unauthorized\"}");
-                                                }))
-
-                                .oauth2Login(oauth2 -> oauth2
-                                                .loginPage("/login")
-                                                .successHandler(oAuth2LoginSuccessHandler))
-                                .logout(logout -> logout.permitAll())
-
-                                .exceptionHandling(ex -> ex
-                                                .authenticationEntryPoint((req, res, e) -> {
-                                                        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                                        res.setContentType("application/json");
-                                                        res.getWriter().write("""
-                                                                        {"error":"unauthorized"}
-                                                                           """);
-                                                }))
-                                .oauth2ResourceServer(oauth2 -> oauth2
-                                                .jwt(jwt -> jwt.jwtAuthenticationConverter(
-                                                                jwtAuthenticationConverter())));
-
-                return http.build();
-        }
 
         @Bean
         public JwtDecoder jwtDecoder() {
@@ -131,7 +69,7 @@ public class SecurityConfig {
         }
 
         @Bean
-        @Order(1)
+        @Order(0)
         public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .securityMatcher("/api/**")
@@ -164,7 +102,7 @@ public class SecurityConfig {
         }
 
         @Bean
-        @Order(2)
+        @Order(1)
         public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .authorizeHttpRequests(auth -> auth

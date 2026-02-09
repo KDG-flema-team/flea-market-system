@@ -21,7 +21,7 @@ import com.example.fleamarketsystem.service.ReviewService;
 import com.example.fleamarketsystem.service.UserService;
 
 @RestController
-@RequestMapping("/api/v1/my-page2")
+@RequestMapping("/api/v1/my-page")
 public class UserRestController {
 	
 	private final UserService userService;

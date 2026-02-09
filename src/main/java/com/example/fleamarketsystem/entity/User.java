@@ -59,7 +59,10 @@ public class User {
 	
 	@Column(name = "description", length = 1000)
 	private String description;
-	
+
+	@Column(name = "profile_image_url", length = 500)
+	private String profileImageUrl;
+
 	public boolean hasRole(String role) {
 	    return this.role.equals(role);
 	}
