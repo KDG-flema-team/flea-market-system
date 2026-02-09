@@ -75,22 +75,32 @@ public class UserService {
 		String auth0Id = jwt.getSubject();
 		String email = jwt.getClaimAsString("email");
 		String name = jwt.getClaimAsString("name");
+		String picture = jwt.getClaimAsString("picture"); // Auth0のプロフィール画像URL
 
-		log.info("Auth0認証: auth0Id={}, email={}, name={}", auth0Id, email, name);
+		log.info("Auth0認証: auth0Id={}, email={}, name={}, picture={}", auth0Id, email, name, picture);
 
 		// Auth0 IDでユーザーを検索
 		Optional<User> existingUser = repo.findByAuth0Id(auth0Id);
 		if (existingUser.isPresent()) {
-			log.info("既存のAuth0ユーザーが見つかりました: userId={}", existingUser.get().getId());
-			return existingUser.get();
+			User user = existingUser.get();
+			// プロフィール画像を更新（Auth0で変更された場合に対応）
+			if (picture != null && !picture.equals(user.getProfileImageUrl())) {
+				user.setProfileImageUrl(picture);
+				updateUserInNewTransaction(user);
+			}
+			log.info("既存のAuth0ユーザーが見つかりました: userId={}", user.getId());
+			return user;
 		}
 
 		// メールアドレスでも検索
 		Optional<User> existingByEmail = repo.findByEmail(email);
 		if (existingByEmail.isPresent()) {
 			User user = existingByEmail.get();
-			// 既存ユーザーにAuth0 IDを設定
+			// 既存ユーザーにAuth0 IDとプロフィール画像を設定
 			user.setAuth0Id(auth0Id);
+			if (picture != null) {
+				user.setProfileImageUrl(picture);
+			}
 			log.info("既存ユーザーにAuth0 IDを設定: userId={}, auth0Id={}", user.getId(), auth0Id);
 			updateUserInNewTransaction(user); // 新しいトランザクションで確実に保存
 			return user;
@@ -98,7 +108,7 @@ public class UserService {
 
 		// 新規ユーザーを作成
 		try {
-			return createNewAuth0User(auth0Id, email, name);
+			return createNewAuth0User(auth0Id, email, name, picture);
 		} catch (Exception e) {
 			log.warn("ユーザー作成中にエラーまたは競合を検出。既存ユーザーを再取得します: auth0Id={}, error={}", auth0Id, e.getMessage());
 			// 新しいトランザクションで既存ユーザーを取得（既に別のスレッドで作成されている可能性があるため）
@@ -118,7 +128,7 @@ public class UserService {
 	}
 
 	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
-	protected User createNewAuth0User(String auth0Id, String email, String name) {
+	protected User createNewAuth0User(String auth0Id, String email, String name, String picture) {
 		log.info("新規Auth0ユーザーを作成: auth0Id={}, email={}", auth0Id, email);
 		User newUser = new User();
 		newUser.setAuth0Id(auth0Id);
@@ -137,6 +147,11 @@ public class UserService {
 		newUser.setRank("bronze");
 		newUser.setEnabled(true);
 		newUser.setBanned(false);
+
+		// Auth0のプロフィール画像URLを設定
+		if (picture != null) {
+			newUser.setProfileImageUrl(picture);
+		}
 
 		return repo.save(newUser);
 	}

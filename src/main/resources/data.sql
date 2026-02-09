@@ -3,7 +3,7 @@
 INSERT INTO users (auth0_id, name, email, password, role, rank, enabled, banned) VALUES
   ('auth0|697c2f13cedce9109f5bce8d', '出品者A', 'sellerA@example.com', 'VPGGVmnN!yC39EY', 'user', 'silver', TRUE, FALSE),
   ('auth0|697c32d79f91842cb6b36cc4',  '購入者B', 'xyz@example.com',     'VPGGVmnN!yC39EY', 'user',  'bronze', TRUE, FALSE),
-  ('auth0|697c32e7ba50d6680a8f2d45',  '管理者C', 'adminC@example.com',   'VPGGVmnN!yC39EY', 'admin',  'gold',   TRUE, FALSE),
+  ('auth0|697c32e7ba50d6680a8f2d45',  '管理者C', 'adminC@example.com',   'VPGGVmnN!yC39EY', 'admin',  'gold',   TRUE, FALSE);
 
 -- category
 INSERT INTO category (name) VALUES
@@ -91,7 +91,7 @@ INSERT INTO notice (title, content, created_at, user_id, is_read) VALUES
 ('不正アクセス検知', '不審なログイン試行を検知しました。', NOW() - INTERVAL '4 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
 ('月次レポート', '12月の取引件数：1,250件、総売上：3,500,000円', NOW() - INTERVAL '7 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
 ('システム更新完了', 'バージョン2.5.0へのアップデートが完了しました。', NOW() - INTERVAL '10 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
-('管理者権限変更', '新しい管理者が追加されました。', NOW() - INTERVAL '15 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE),
+('管理者権限変更', '新しい管理者が追加されました。', NOW() - INTERVAL '15 days', (SELECT id FROM users WHERE email='adminC@example.com'), TRUE);
 
 -- info 
 

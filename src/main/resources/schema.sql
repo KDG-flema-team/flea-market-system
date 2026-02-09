@@ -29,8 +29,9 @@ CREATE TABLE users (
   ban_reason TEXT,
   banned_at TIMESTAMP,
   banned_by_admin_id INT,
-  
-  description VARCHAR(1000)
+
+  description VARCHAR(1000),
+  profile_image_url VARCHAR(500)            -- ★ Auth0のプロフィール画像URL
 );
 
 CREATE TABLE category (

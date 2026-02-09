@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import com.example.fleamarketsystem.entity.User;
@@ -46,26 +47,24 @@ public class AuthUserResolver {
 					);
 		}
 		
-		/* 将来的にAuth0を導入 */
-		
-		/*
-		 if (principal instanceof Jwt jwt) {
-			 
-			 String auth0UserId = jwt.getSubject();
-			 
-			 User user = userRepository.findByAuth0UserId(Auth0UserId)
-					 .orElseThrow(() -> new RuntimeException("認証されていません"));
-			 
-			 return new AuthUser(
-					 user.getId(),
-					 user.getEmail(),
-					 user.getRole()
-					 );
-			 
-		 }
-		 */
-		 
-		 throw new AuthenticationCredentialsNotFoundException("未対応の認証方式です");
+		/* Auth0 JWT認証 */
+
+		if (principal instanceof Jwt jwt) {
+
+			String auth0Id = jwt.getSubject();
+
+			User user = userRepository.findByAuth0Id(auth0Id)
+					.orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません"));
+
+			return new AuthUser(
+					user.getId(),
+					user.getEmail(),
+					user.getRole()
+					);
+
+		}
+
+		throw new AuthenticationCredentialsNotFoundException("未対応の認証方式です");
 		
 	}
 
