@@ -84,7 +84,7 @@ public class MeRestController {
 
     private User currentUser(Authentication authentication) {
         AuthUser authUser = authUserResolver.resolve(authentication);
-        return userService.getUserByEmail(authUser.email())
+        return userService.getUserById(authUser.userId())
                 .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません"));
     }
 }

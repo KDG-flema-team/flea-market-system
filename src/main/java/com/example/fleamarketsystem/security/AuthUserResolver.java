@@ -9,16 +9,19 @@ import org.springframework.stereotype.Component;
 
 import com.example.fleamarketsystem.entity.User;
 import com.example.fleamarketsystem.repository.UserRepository;
+import com.example.fleamarketsystem.service.UserService;
 
 @Component
 public class AuthUserResolver {
-	
+
 	private final UserRepository userRepository;
-	
-	public AuthUserResolver(UserRepository userRepository) {
-		
+	private final UserService userService;
+
+	public AuthUserResolver(UserRepository userRepository, UserService userService) {
+
 		this.userRepository = userRepository;
-		
+		this.userService = userService;
+
 	}
 	
 	public AuthUser resolve(Authentication authentication) {
@@ -51,10 +54,8 @@ public class AuthUserResolver {
 
 		if (principal instanceof Jwt jwt) {
 
-			String auth0Id = jwt.getSubject();
-
-			User user = userRepository.findByAuth0Id(auth0Id)
-					.orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません"));
+			// ユーザーが存在しない場合は自動的に作成
+			User user = userService.getOrCreateUserFromAuth0(jwt);
 
 			return new AuthUser(
 					user.getId(),

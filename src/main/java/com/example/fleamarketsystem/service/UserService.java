@@ -129,16 +129,20 @@ public class UserService {
 
 	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
 	protected User createNewAuth0User(String auth0Id, String email, String name, String picture) {
-		log.info("新規Auth0ユーザーを作成: auth0Id={}, email={}", auth0Id, email);
+		log.info("新規Auth0ユーザーを作成: auth0Id={}, email={}, name={}", auth0Id, email, name);
 		User newUser = new User();
 		newUser.setAuth0Id(auth0Id);
 		newUser.setEmail(email != null ? email : (auth0Id != null ? auth0Id + "@auth0.local" : "unknown@auth0.local"));
+
+		// 名前の設定（優先順位: name > emailの@前 > "ユーザー"）
 		String displayName = name;
-		if (displayName == null) {
+		if (displayName == null || displayName.isBlank()) {
 			if (email != null && !email.isEmpty() && email.contains("@")) {
+				// メールアドレスの@より前の部分を使用
 				displayName = email.split("@")[0];
 			} else {
-				displayName = auth0Id != null ? auth0Id : "user";
+				// 最終的なフォールバック（auth0Idは識別子なので使わない）
+				displayName = "ユーザー";
 			}
 		}
 		newUser.setName(displayName);

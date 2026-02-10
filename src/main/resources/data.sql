@@ -24,6 +24,13 @@ VALUES
    '超面白い本','とても面白く大きい本',2000.00,
    (SELECT id FROM category WHERE name='本'),'出品中');
 
+-- item_images
+INSERT INTO item_images (item_id, image_url) VALUES
+  ((SELECT id FROM item WHERE name='Javaプログラミング入門'),'https://res.cloudinary.com/dnkebjtmc/image/upload/v1770631215/m46278974385_3_nvr77b.jpg'),
+  ((SELECT id FROM item WHERE name='ワイヤレスイヤホン'),'https://res.cloudinary.com/dnkebjtmc/image/upload/v1770631080/ER74380_3L1_t1jzly.jpg'),
+  ((SELECT id FROM item WHERE name='超面白い本'),'https://res.cloudinary.com/dnkebjtmc/image/upload/v1770631042/4691932_s_ovjncg.jpg');
+  ;
+
    
 INSERT INTO app_order (item_id, buyer_id, price, status, created_at)
 VALUES

@@ -75,40 +75,46 @@ public class UserRestController {
     
     @GetMapping("/selling")
     public ResponseEntity<?> mySellingItems(Authentication authentication) {
-    	
+
         User user = currentUser(authentication);
-        
-        return ResponseEntity.ok(itemService.getItemsBySeller(user));
-        
+
+        return ResponseEntity.ok(
+                java.util.Map.of("sellingItems", itemService.getItemsBySeller(user))
+        );
+
     }
     
     @GetMapping("/orders")
-    public ResponseEntity<List<OrdersSummaryResponse>> myOrders (Authentication authentication) {
-    	
+    public ResponseEntity<?> myOrders (Authentication authentication) {
+
     	User user = currentUser(authentication);
-        
+
         return ResponseEntity.ok(
-        		myPageOrderService.getOrderSummaries(user)
+                java.util.Map.of("orders", myPageOrderService.getOrderSummaries(user))
         	);
-        
+
     }
     
     @GetMapping("/sales")
     public ResponseEntity<?> mySales(Authentication authentication) {
-    	
+
         User user = currentUser(authentication);
-        
-        return ResponseEntity.ok(appOrderService.getOrdersBySeller(user));
-        
+
+        return ResponseEntity.ok(
+                java.util.Map.of("records", appOrderService.getOrdersBySeller(user))
+        );
+
     }
     
     @GetMapping("/favorites")
     public ResponseEntity<?> myFavorites(Authentication authentication) {
-    	
+
         User user = currentUser(authentication);
-        
-        return ResponseEntity.ok(favoriteService.getFavoriteItemsByUser(user));
-        
+
+        return ResponseEntity.ok(
+                java.util.Map.of("favoriteItems", favoriteService.getFavoriteItemsByUser(user))
+        );
+
     }
     
     @GetMapping("/reviews")
@@ -118,12 +124,12 @@ public class UserRestController {
     }
 
     private User currentUser(Authentication authentication) {
-    	
+
         AuthUser authUser = authUserResolver.resolve(authentication);
-        
-        return userService.getUserByEmail(authUser.email())
+
+        return userService.getUserById(authUser.userId())
                 .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません"));
-        
+
     }
 
 
