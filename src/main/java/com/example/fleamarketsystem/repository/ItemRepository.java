@@ -16,4 +16,9 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     Page<Item> findByNameContainingIgnoreCaseAndCategoryIdAndStatus(String name, Long categoryId, String status, Pageable pageable);
     Page<Item> findByStatus(String status, Pageable pageable);
     List<Item> findBySeller(User seller);
+
+    // For fetching items without status filter
+    Page<Item> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<Item> findByCategoryId(Long categoryId, Pageable pageable);
+    Page<Item> findByNameContainingIgnoreCaseAndCategoryId(String name, Long categoryId, Pageable pageable);
 }

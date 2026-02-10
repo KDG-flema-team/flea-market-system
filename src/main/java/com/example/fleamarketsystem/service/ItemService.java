@@ -27,16 +27,31 @@ public class ItemService {
         this.cloudinaryService = cloudinaryService;
     }
 
-    public Page<Item> searchItems(String keyword, Long categoryId, int page, int size) {
+    public Page<Item> searchItems(String keyword, Long categoryId, String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
+
+        // If status is not specified, return all items regardless of status
+        if (status == null || status.isEmpty()) {
+            if (keyword != null && !keyword.isEmpty() && categoryId != null) {
+                return itemRepository.findByNameContainingIgnoreCaseAndCategoryId(keyword, categoryId, pageable);
+            } else if (keyword != null && !keyword.isEmpty()) {
+                return itemRepository.findByNameContainingIgnoreCase(keyword, pageable);
+            } else if (categoryId != null) {
+                return itemRepository.findByCategoryId(categoryId, pageable);
+            } else {
+                return itemRepository.findAll(pageable);
+            }
+        }
+
+        // If status is specified, filter by status
         if (keyword != null && !keyword.isEmpty() && categoryId != null) {
-            return itemRepository.findByNameContainingIgnoreCaseAndCategoryIdAndStatus(keyword, categoryId, "出品中", pageable);
+            return itemRepository.findByNameContainingIgnoreCaseAndCategoryIdAndStatus(keyword, categoryId, status, pageable);
         } else if (keyword != null && !keyword.isEmpty()) {
-            return itemRepository.findByNameContainingIgnoreCaseAndStatus(keyword, "出品中", pageable);
+            return itemRepository.findByNameContainingIgnoreCaseAndStatus(keyword, status, pageable);
         } else if (categoryId != null) {
-            return itemRepository.findByCategoryIdAndStatus(categoryId, "出品中", pageable);
+            return itemRepository.findByCategoryIdAndStatus(categoryId, status, pageable);
         } else {
-            return itemRepository.findByStatus("出品中", pageable);
+            return itemRepository.findByStatus(status, pageable);
         }
     }
 

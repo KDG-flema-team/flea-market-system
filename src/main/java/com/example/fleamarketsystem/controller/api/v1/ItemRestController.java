@@ -53,10 +53,11 @@ public class ItemRestController {
     public Page<ItemResponse> search(
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long categoryId,
+        @RequestParam(required = false) String status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        return itemService.searchItems(keyword, categoryId, page, size)
+        return itemService.searchItems(keyword, categoryId, status, page, size)
             .map(ItemResponse::from);
     }
     
